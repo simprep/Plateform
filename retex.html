@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">RETEX Évaluation Simulateur</title>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <!-- EmailJS -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <!-- jsPDF pour générer le PDF côté client -->
@@ -560,31 +558,81 @@ body {
 }
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
-
-<!-- SIMPREP Banner -->
-<div style="background:#0F1923;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100">
-  <div style="font-size:14px;font-weight:700;color:#fff;letter-spacing:2px">✦ SIMPREP</div>
-  <div id="candidat-banner-text" style="font-size:11px;color:rgba(255,255,255,0.5)">Formulaire retex candidat</div>
-</div>
-
-<!-- Token error -->
-<div id="token-error" style="display:none;min-height:50vh;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:40px;text-align:center">
+<div id="simprep-error" style="display:none;position:fixed;inset:0;background:#0F1923;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:40px">
   <div style="font-size:48px">⚠️</div>
-  <h2 style="color:#DC2626;font-size:18px" id="token-error-msg">Lien invalide</h2>
-  <p style="color:#6B7280;font-size:13px">Ce lien est invalide ou a déjà été utilisé.<br>Contacte ton instructeur pour recevoir un nouveau lien.</p>
+  <h2 style="color:#F87171;font-size:18px" id="simprep-error-msg">Lien invalide</h2>
+  <p style="color:rgba(255,255,255,.5);font-size:13px">Ce lien est invalide ou a déjà été utilisé.<br>Contacte ton instructeur pour un nouveau lien.</p>
 </div>
 
-<!-- Success -->
-<div id="submit-success" style="display:none;min-height:50vh;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px;text-align:center">
+<div id="simprep-success" style="display:none;position:fixed;inset:0;background:#0F1923;z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:40px">
   <div style="font-size:64px">✅</div>
-  <h2 style="color:#059669;font-size:20px">Retex envoyé !</h2>
-  <p style="color:#6B7280;font-size:13px">Merci pour ton retex.<br>Ton instructeur a été notifié.</p>
+  <h2 style="color:#34D399;font-size:22px">Retex envoyé !</h2>
+  <p style="color:rgba(255,255,255,.5);font-size:13px">Merci pour ton retex.<br>Ton instructeur a été notifié.</p>
 </div>
 
-<div id="form-wrap">
+<script>
+// SIMPREP — Token validation + Supabase submit
+var _SB = supabase.createClient("https://erzinefnmcyxhtmkimmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyemluZWZubWN5eGh0bWtpbW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1ODYxNjQsImV4cCI6MjA5NDE2MjE2NH0.nLW6Cy3vWjfSSOXlrrMalwfyXg7zbLTM5sRR8D3HUCU");
+var _retexToken = null;
+var _retexRecord = null;
+
+(async function boot() {
+  var p = new URLSearchParams(window.location.search);
+  _retexToken = p.get('token');
+  if(!_retexToken) {
+    var el = document.getElementById('simprep-error');
+    el.style.display = 'flex'; return;
+  }
+  var res = await _SB.from('retex').select('id,candidat_nom,statut').eq('token', _retexToken).maybeSingle();
+  if(res.error || !res.data) {
+    document.getElementById('simprep-error').style.display = 'flex'; return;
+  }
+  if(res.data.statut === 'recu') {
+    document.getElementById('simprep-error-msg').textContent = 'Retex déjà envoyé ✅';
+    document.getElementById('simprep-error').querySelector('p').textContent = 'Tu as déjà rempli ce formulaire. Merci !';
+    document.getElementById('simprep-error').style.display = 'flex'; return;
+  }
+  _retexRecord = res.data;
+  // Prefill nom
+  var nomField = document.getElementById('f-nom');
+  if(nomField && res.data.candidat_nom) {
+    nomField.value = res.data.candidat_nom;
+    nomField.readOnly = true;
+    nomField.style.background = 'rgba(255,255,255,0.05)';
+  }
+})();
+
+// Override submitRetex to also push to Supabase
+var _origSubmit = window.submitRetex;
+window.addEventListener('load', function() {
+  // Re-wrap after original JS loads
+  var _orig = window.submitRetex;
+  window.submitRetex = async function() {
+    // Call original first (handles EmailJS + validation)
+    await _orig();
+    // If submission succeeded (button changed), push to Supabase
+    var btn = document.getElementById('btn-send');
+    if(btn && btn.textContent.includes('✅') && _retexToken) {
+      var data = typeof collectData === 'function' ? collectData() : {};
+      await _SB.from('retex').update({
+        reponses: data,
+        statut: 'recu',
+        submitted_at: new Date().toISOString()
+      }).eq('token', _retexToken);
+      setTimeout(function() {
+        document.getElementById('simprep-success').style.display = 'flex';
+      }, 1500);
+    }
+  };
+});
+</script>
+
+
+
 <div class="page">
 
   <!-- ══ HEADER ══ -->
@@ -1324,141 +1372,1912 @@ body {
     </div>
 
     <!-- ══ SUBMIT ══ -->
-    
-  <!-- Submit SIMPREP -->
-  <div class="submit-section">
-    <h3>📤 Envoyer mon retex</h3>
-    <p>Tes réponses seront enregistrées dans la base de données SIMPREP et ton instructeur sera notifié.</p>
-    <div class="field" style="max-width:320px;margin:0 auto 20px;">
-      <label>Ton adresse email (pour recevoir une copie)</label>
-      <input type="email" id="f-email" placeholder="ton@email.com">
+    <div class="submit-section">
+      <h3 data-fr="📤 Envoyer mon retex" data-en="📤 Send my feedback">📤 Envoyer mon retex</h3>
+      <p>Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.</p>
+      <div class="field" style="max-width:320px;margin:0 auto 20px;">
+        <label>Ton adresse email (pour recevoir le récap)</label>
+        <input type="email" id="f-email" placeholder="ton@email.com">
+      </div>
+      <button class="btn-send" id="btn-send" onclick="submitRetex()" data-fr="🚀 Envoyer mon retex" data-en="🚀 Send my feedback">🚀 Envoyer mon retex</button>
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-label" id="progress-label">Envoi en cours…</div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      </div>
+      <div class="status-msg" id="status-msg"></div>
     </div>
-    <div style="text-align:center">
-      <button onclick="submitRetex()" id="submit-btn" class="submit-btn">Envoyer mon retex →</button>
-      <div id="submit-error" style="display:none;margin-top:10px;color:#DC2626;font-size:12px"></div>
-    </div>
+
+  </div><!-- /content -->
+
+  <div class="doc-footer">
+    RETEX Évaluation Simulateur · Document confidentiel coaching &nbsp;🇫🇷
   </div>
-</div><!-- /form-wrap -->
 </div><!-- /page -->
 
+<!-- ══ QR FAB ══ -->
+<button class="qr-fab" onclick="openQR()" data-fr="📱 QR Code" data-en="📱 QR Code">📱 QR Code</button>
+
+<!-- ══ QR MODAL ══ -->
+<div class="modal-overlay" id="qr-modal" onclick="closeQR(event)">
+  <div class="modal-box">
+    <h3 data-fr="📱 Partager le formulaire" data-en="📱 Share the form">📱 Partager le formulaire</h3>
+    <p data-fr="Scannez ce QR code ou copiez le lien pour accéder au retex." data-en="Scan this QR code or copy the link to access the feedback form.">Scannez ce QR code ou copiez le lien pour accéder au retex.</p>
+    <div id="qr-container"></div>
+    <div class="modal-url" id="modal-url" onclick="copyUrl()" title="Cliquer pour copier" data-fr-default="🔗 Cliquer pour copier le lien" data-en-default="🔗 Click to copy the link">🔗 Cliquer pour copier le lien</div>
+    <div data-fr="✅ Hébergez ce fichier sur GitHub Pages, Netlify ou Vercel (gratuit)" data-en="✅ Host this file on GitHub Pages, Netlify or Vercel (free)" style="font-size:11px;color:var(--grey-t);margin-top:8px;">
+      ✅ Hébergez ce fichier sur GitHub Pages, Netlify ou Vercel (gratuit)
+    </div>
+    <button class="modal-close" onclick="closeQR()" data-fr="Fermer" data-en="Close">Fermer</button>
+  </div>
+</div>
+
 <script>
-// ════ SUPABASE RETEX ════
-const _SB = supabase.createClient("https://erzinefnmcyxhtmkimmt.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyemluZWZubWN5eGh0bWtpbW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1ODYxNjQsImV4cCI6MjA5NDE2MjE2NH0.nLW6Cy3vWjfSSOXlrrMalwfyXg7zbLTM5sRR8D3HUCU");
-let _retexToken = null;
-let _retexRecord = null;
+// ════════════════════════════════════════════════════
+// CONFIG — clés API
+// ════════════════════════════════════════════════════
+const CONFIG = {
+  FORM_URL: window.location.href,
+  AIRTABLE_TOKEN: '',
+  AIRTABLE_BASE_ID: '',
+  AIRTABLE_TABLE_NAME: '',
+  EMAILJS_PUBLIC_KEY:  '5ZOYkeHEtkwNj_OyU',
+  EMAILJS_SERVICE_ID:  'service_np9pjk4',
+  EMAILJS_TEMPLATE_ID: 'template_y58x40v',
+  COACH_EMAIL:         'simprepparis@gmail.com'
+};
+const isConfigured = true;
 
-(async function boot() {
-  const p = new URLSearchParams(window.location.search);
-  _retexToken = p.get('token');
-  const errEl = document.getElementById('token-error');
-  const formEl = document.getElementById('form-wrap');
-
-  if(!_retexToken) {
-    errEl.style.display='flex'; formEl.style.display='none'; return;
-  }
-
-  const {data,error} = await _SB.from('retex').select('id,candidat_nom,statut').eq('token',_retexToken).maybeSingle();
-
-  if(error||!data) {
-    errEl.style.display='flex'; formEl.style.display='none'; return;
-  }
-  if(data.statut==='recu') {
-    document.getElementById('token-error-msg').textContent='Retex déjà envoyé ✅';
-    document.getElementById('token-error').querySelector('p').textContent='Tu as déjà rempli ce formulaire. Merci !';
-    errEl.style.display='flex'; formEl.style.display='none'; return;
-  }
-
-  _retexRecord = data;
-  document.getElementById('candidat-banner-text').textContent='Retex de ' + (data.candidat_nom||'');
-  formEl.style.display='block';
-})();
-
-function collectRetexData() {
-  const d = {};
-  const v = id => document.getElementById(id)?.value||'';
-  const chips = id => [...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.dataset.val||c.textContent.trim());
-  const checks = id => [...document.querySelectorAll('#'+id+' input:checked')].map(i=>i.value);
-
-  d.compagnie_eval = v('f-compagnie-eval');
-  d.type_eval = checks('grp-type');
-  d.resultat = v('f-result');
-  d.compagnie_actuelle = v('f-compagnie');
-  d.machine_actuelle = v('f-machine');
-  d.hdv_total = v('f-hdv');
-  d.machine_eval = chips('grp-machine-eval')[0]||'';
-  d.nb_candidats = chips('grp-nb-candidats')[0]||'';
-  d.langue = chips('grp-langue')[0]||'';
-  d.role = chips('grp-role-seance');
-  d.scenario_match = chips('grp-scenario-match')[0]||'';
-  d.inattendu = chips('grp-inattendu')[0]||'';
-  d.inattendu_desc = v('f-inattendu');
-  d.attitude_exo = checks('grp-attitude')[0]||'';
-  d.stress = document.querySelector('input[name="stress"]:checked')?.value||'';
-  d.charge_mentale = document.querySelector('input[name="charge"]:checked')?.value||'';
-  d.difficulte_percue = document.querySelector('input[name="diff"]:checked')?.value||'';
-  d.ressenti = v('f-ressenti');
-  d.briefing_sujets = checks('grp-briefing');
-  d.briefing_niveau = checks('grp-niv-briefing')[0]||'';
-  d.briefing_duree = v('f-duree-briefing');
-  d.briefing_questions = v('f-questions');
-  d.points_evalues = checks('grp-eval');
-  d.difference = v('f-difference');
-  d.erreurs = checks('grp-erreurs');
-  d.erreur_principale = v('f-erreur-principale');
-  d.erreur_gestion = v('f-erreur-gestion');
-  d.auto_eval = window._gaugeValues||{};
-  d.coaching_utile = v('f-utile');
-  d.coaching_insuf = v('f-insuf');
-  d.coaching_proche = v('f-proche');
-  d.coaching_different = v('f-different');
-  d.coaching_ameliorer = v('f-ameliorer');
-  d.debrief_exo = v('f-debrief');
-  d.axes = v('f-axes');
-  d.ressenti_final = v('f-ressenti-final');
-  d.retex_libre = v('f-libre');
-  d.email = v('f-email');
-
-  // Timeline
-  d.timeline = [];
-  document.querySelectorAll('.brick-wrap .brick').forEach(function(brick) {
-    const bid = brick.id;
-    const phase = document.getElementById(bid+'_phase_select')?.value||'';
-    if(!phase||phase==='— sélectionner —') return;
-    const entry = {phase, questions:{}};
-    brick.querySelectorAll('.timeline-question').forEach(function(q) {
-      const qid = q.dataset.qid;
-      const sel = [...q.querySelectorAll('.chip.on')].map(c=>c.dataset.val||c.textContent.trim());
-      const txt = q.querySelector('textarea')?.value||'';
-      if(sel.length) entry.questions[qid]=sel.join(', ');
-      else if(txt) entry.questions[qid]=txt;
-    });
-    d.timeline.push(entry);
+// ════════════════════════════════════════════════════
+// HELPERS GÉNÉRAUX
+// ════════════════════════════════════════════════════
+function toggle(label) {
+  const input = label.querySelector('input[type="checkbox"]');
+  if (!input) return;
+  input.checked = !input.checked;
+  label.classList.toggle('checked', input.checked);
+}
+function toggleSingle(label, groupId) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.querySelectorAll('.cb-item').forEach(item => {
+    const input = item.querySelector('input[type="checkbox"]');
+    if (input) input.checked = false;
+    item.classList.remove('checked');
   });
-
-  return d;
+  const input = label.querySelector('input[type="checkbox"]');
+  if (!input) return;
+  input.checked = true;
+  label.classList.add('checked');
+}
+function selectResult(el, value) {
+  document.querySelectorAll('#grp-result .result-badge').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('f-result').value = value;
+}
+function getCheckedValues(groupId) {
+  const group = document.getElementById(groupId);
+  if (!group) return [];
+  return [...group.querySelectorAll('input[type="checkbox"]:checked')].map(i => i.value);
+}
+function getRadioValue(name) {
+  const el = document.querySelector('input[name="' + name + '"]:checked');
+  return el ? el.value : '';
 }
 
-async function submitRetex() {
-  if(!_retexRecord) return;
-  const btn = document.getElementById('submit-btn');
-  const errEl = document.getElementById('submit-error');
-  btn.textContent='Envoi en cours…'; btn.disabled=true;
+// ════════════════════════════════════════════════════
+// TIMELINE BUILDER — moteur adaptatif progressif
+// ════════════════════════════════════════════════════
+const PHASES = [
+  '— sélectionner —',
+  'Parking / Mise en route','Roulage','Alignement piste','Décollage',
+  'Montée initiale','Croisière','Descente / Prép. arrivée',
+  'Tour de piste VFR','Interception finale',
+  'Approche ILS','Approche VOR','Approche RNAV','Approche visuelle',
+  'Remise de gaz','Panne / Urgence','Atterrissage final','Autre'
+];
 
-  const {error} = await _SB.from('retex').update({
-    reponses: collectRetexData(),
-    statut: 'recu',
+const TL = (function() {
+
+const ISSUE_COLORS = {
+  'Très propre':'issue-green','Correct':'issue-green',
+  'Correct avec petites erreurs':'issue-green','Stable et correct':'issue-green',
+  'Posé stable':'issue-green','Posé techniquement correct mais dégradé':'issue-amber',
+  'Dégradé mais récupéré':'issue-amber','Quelques hésitations':'issue-amber',
+  'Charge élevée maîtrisée':'issue-amber','Dégradé':'issue-dark',
+  'Désorganisé':'issue-dark','Désorganisation':'issue-dark',
+  'Retard sur la situation':'issue-dark','Toujours en surcharge':'issue-red',
+  'Saturation':'issue-red','Dégradation progressive':'issue-red',
+  'Remise de gaz demandée':'issue-red','Approche abandonnée / reset':'issue-red',
+  'Interception ratée':'issue-red','Intervention examinateur':'issue-danger',
+  'Exercice interrompu':'issue-danger'
+};
+
+const GRAVITY = {
+  'Low visibility':2,'Piste contaminée':2,'Wet / contaminée':2,
+  'Performance limite':2,'Temps limité':1,'Temps limité / pression':1,
+  'Pression examinateur':1,'Haute énergie':2,'Changement tardif':1,
+  'Changement tardif de piste':2,'Changement piste tardif':2,
+  'Raw data':2,'Raw data imposé':2,'Raw data + ATHR':2,'Raw data + ATHR OFF':3,
+  'FD only, ATHR OFF':2,'AP OFF':2,'Single engine':3,
+  'ECAM en cours / panne non totalement traitée':3,
+  'Fatigue / saturation déjà présente':2,
+  'Approche non préparée ou briefing incomplet':2,
+  'Suite à une panne':3,'Après panne':3,'Après événement déstabilisant':2,
+  'Repositionnement après remise de gaz':2,'Interception tardive':2,
+  'Panne moteur':3,'Engine fire':3,'Severe damage':3,
+  'Smoke / Fire / Fumes':3,'Hydraulique':2,'Électrique':2,
+  'Pressurisation':2,'Flight controls':3,'TCAS RA':2,'TCAS':2,
+  'Windshear':3,'Windshear / alarme météo':3,'Windshear / météo sévère':3,
+  'Unstable':2,'Instabilité':2,'Écart LOC / glide':2,'Speed excessive':2,
+  'Altitude bust':3,'Speed bust':2,'Mauvaise configuration':2,
+  'Perte de CRM':2,'Mauvaise décision':2,'Désorganisation':2,
+  'Saturation':3,'Saturation complète':3,'Saturé':3,'Saturé dès le départ':3,
+  'Souvent en retard':2,'Très tardive':3,'Tardive':1,'Subie':2,
+  'Intervention examinateur':3,'Exercice interrompu':3
+};
+
+const PHASE_QUESTIONS = {
+
+'Parking / Mise en route': [
+  {id:'config', label:'Configuration de départ', type:'single',
+   opts:['Cold & Dark','GPU only','APU available','Engines running','Repositionnement rapide','Setup partiellement effectué']},
+  {id:'conditions', label:'Conditions particulières', type:'multi',
+   opts:['Temps limité','Forte charge mentale dès le départ','Setup complexe','Changement tardif','Clairance complexe','Pression examinateur','Aucun facteur notable','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['SOP / discipline','Flows','CRM','Vérification croisée','Gestion charge mentale','Priorisation','Gestion temps','Communication PF/PM','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat global', type:'single', is_issue:true,
+   opts:['Très propre','Correct avec petites erreurs','Désorganisé','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Roulage': [
+  {id:'conditions', label:'Conditions de roulage', type:'multi',
+   opts:['Standard','Low visibility','Backtrack','Taxiway complexe','Forte densité trafic','Instructions ATC rapides','Changement tardif de piste','Autre'],
+   hasAutre:true},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Navigation sol','Monitoring','Charge radio','CRM','Gestion vitesse','Conscience situationnelle','Vérifications cockpit','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['SOP','Vigilance trafic','Partage PF/PM','Gestion charge','Lecture chart','Anticipation','Monitoring','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Très propre','Quelques hésitations','Désorganisation','Erreur notable','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Alignement piste': [
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['SOP','Briefing décollage','Crosscheck','CRM','Monitoring','Gestion pression temporelle','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de pression ressentie', type:'single',
+   opts:['Très faible','Faible','Normale','Forte','Extrême']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Très propre','Correct','Quelques hésitations','Désorganisation','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Décollage': [
+  {id:'conditions', label:'Conditions de départ', type:'multi',
+   opts:['Standard','Low visibility','Météo dégradée','Vent fort','Piste contaminée','Performance limite','Forte charge ATC','Temps limité / pression','Autre'],
+   hasAutre:true},
+  {id:'type_dep', label:'Type de départ', type:'single',
+   opts:['Standard SID','Radar heading','Raw data','Engine failure expected','Départ particulier / complexe']},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Axe piste','Rotation','Flight director','Gestion vitesse','Rentrée des traînées','Radio','Navigation','CRM','Monitoring','Charge mentale','Pilotage raw data','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Discipline SOP','Contrôle trajectoire','Callouts','Monitoring PM','Priorisation','Gestion panne','TEM','Gestion automatisation','Leadership','Autre'],
+   hasAutre:true},
+  {id:'degradation', label:"Y a-t-il eu une dégradation ?", type:'multi',
+   opts:['Non','Speed issue','Axe dégradé','Mauvais callout','Mauvaise gestion config','Désorganisation','Mauvaise trajectoire','Saturation','Panne','Autre'],
+   revealIfNotOnlyNon:'reaction', hasAutre:true},
+  {id:'reaction', label:'Si dégradation : réaction principale', type:'single', hidden:true,
+   opts:['Correction efficace','Correction tardive','Saturation','Intervention examinateur','Non applicable']},
+  {id:'moment', label:'Moment critique ressenti', type:'single',
+   opts:['Aucun','Alignement','Mise en poussée','Rotation','Positive climb','Nettoyage avion','Rétraction volets','Premier virage']},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Issue du décollage', type:'single', is_issue:true,
+   opts:['Très propre','Correct','Dégradé mais récupéré','Désorganisé','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Montée initiale': [
+  {id:'contexte', label:'Contexte de montée', type:'multi',
+   opts:['Standard','Après panne','Après événement déstabilisant','Forte charge ATC','Reclearance fréquente','Météo dégradée','Raw data','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Navigation','Gestion altitude','Gestion vitesse','Virages','Radio','SOP','Automation','CRM','Monitoring','Saturation','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Reprise de maîtrise','Gestion charge','Priorisation','Navigation','Discipline SOP','Gestion automatisation','Monitoring','Leadership','Capacité à ralentir','Autre'],
+   hasAutre:true},
+  {id:'erreur', label:'Erreur notable ?', type:'multi',
+   opts:['Aucune','Altitude bust','Speed bust','Mauvais mode','Mauvaise trajectoire','Mauvais virage','Mauvaise annonce','Oubli SOP','Mauvais monitoring','Désorganisation']},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:"Comment la montée s'est-elle terminée ?", type:'single', is_issue:true,
+   opts:['Stabilisation complète','Situation récupérée','Toujours en surcharge','Dégradation progressive','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Croisière': [
+  {id:'contexte', label:'Contexte de croisière', type:'multi',
+   opts:['Standard','Exercices navigation','Exercices de mania','Holds','Interceptions','Reclearance fréquente','Raw data','Gestion panne','Forte charge ATC','Changement plan de vol','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Navigation','Automation','Gestion modes','Charge mentale','CRM','Radio','TEM','Priorisation','Gestion ECAM','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Gestion automatisation','Navigation','TEM','CRM','Reprise conscience situationnelle','Priorisation','Monitoring','Raw data','Multitâches','Mania','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Maîtrisé','Dégradé mais récupéré','Désorganisé','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Descente / Prép. arrivée': [
+  {id:'contexte', label:'Contexte descente', type:'multi',
+   opts:['Standard','Forte charge ATC','Météo dégradée','Changement piste tardif','Reclearance fréquente','Pression temporelle','Retour panne / situation dégradée','Autre'],
+   hasAutre:true},
+  {id:'briefing', label:'Préparation arrivée', type:'single',
+   opts:['Briefing complet','Briefing correct mais incomplet','Briefing interrompu','Briefing précipité','Briefing TEM effectué','Pas de briefing structuré']},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Gestion énergie','Anticipation','Navigation','Radio','Automation','CRM','TEM','Charge mentale','Gestion panne','Retour autonome','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Priorisation','SOP','Anticipation','Gestion énergie','TEM','CRM','Leadership','Gestion charge','Conscience de la situation','Gestion temporelle','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Très propre','Charge élevée maîtrisée','Retard sur la situation','Désorganisation','Saturation']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Tour de piste VFR': [
+  {id:'conditions', label:'Conditions', type:'multi',
+   opts:['Standard','Vent','Trafic','Low visibility','Nuit','Forte densité radio','Autre'],
+   hasVent:true, hasAutre:true},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi',
+   opts:['Trajectoire','Gestion vitesse','Configuration','Visuel extérieur','Radio','CRM','Anticipation','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Pilotage pur','Stabilité trajectoire','Gestion énergie','SOP','CRM','Capacity to stay ahead','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Très propre','Correct','Dégradé','Instable','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Interception finale': [
+  {id:'type_int', label:"Type d'interception", type:'single',
+   opts:['LOC seul','LOC + glide','VOR','RNAV','Visuelle','Raw data']},
+  {id:'conditions', label:'Conditions', type:'multi',
+   opts:['Standard','Haute énergie','Interception tardive','Forte charge ATC','Single engine','Mauvaise préparation','Saturation déjà présente','Sous radar vector','Via la STAR','Autre'],
+   hasAutre:true},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Capture trajectoire','Gestion énergie','Navigation','Automation','CRM','Monitoring','Charge mentale','Interception raw data','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat interception', type:'single', is_issue:true,
+   opts:['Très propre','Correct','Dégradé','Overshoot','Prise du G/S avant le LOC','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Approche ILS': [
+  {id:'debut', label:"Comment l'approche a-t-elle débuté ?", type:'single',
+   opts:['Vecteurs radar','STAR / procédure publiée','Guidage direct intercept LOC','Interception tardive','Repositionnement après remise de gaz','Suite à une panne','Suite à un déroutement / retour terrain','Déjà établi en finale']},
+  {id:'conditions', label:'Conditions de réalisation', type:'multi',
+   opts:['Normal ops','Single engine','ECAM en cours / panne non totalement traitée','Raw data imposé','Météo dégradée','Haute énergie','Forte charge ATC','Fatigue / saturation déjà présente','Approche non préparée ou briefing incomplet','Autre'],
+   revealMap:{'Single engine':['cond_se'],'Raw data imposé':['cond_rd']}, hasAutre:true},
+  {id:'cond_se', label:'Traitement panne/ECAM terminé avant approche ?', type:'single', hidden:true,
+   opts:['Oui','Non','Partiellement','Je ne sais pas']},
+  {id:'cond_rd', label:'À quel moment le raw data a-t-il été imposé ?', type:'single', hidden:true,
+   opts:["Avant interception","À l'interception LOC","À l'interception glide","En courte finale","Après déconnexion AP/FD"]},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:3,
+   opts:['Gestion énergie','Interception / trajectoire','ATC','Météo / visibilité','Vent / cisaillement','Trafic','Configuration avion','CRM PF/PM','Monitoring','Automation management','Procédure mal préparée','Aucun facteur notable','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui était principalement évalué', type:'multi', max:3,
+   opts:['Stabilisation','Respect SOP / callouts','Gestion trajectoire','Gestion énergie','TEM','Priorisation','Décision de remise de gaz','Communication','Monitoring PM','Leadership PF','Capacité à ralentir / reprendre','Gestion automatisation','Autre'],
+   hasAutre:true},
+  {id:'degradation', label:"Y a-t-il eu une dégradation ?", type:'multi',
+   opts:['Non','Unstable','Écart LOC / glide','Speed excessive','Mauvaise configuration','TCAS RA','Windshear / alarme météo','Panne','Perte de CRM','Saturation','Mauvaise décision','Intervention examinateur'],
+   revealIfNotOnlyNon:'reaction'},
+  {id:'reaction', label:'Si dégradation : réaction principale', type:'single', hidden:true,
+   opts:['Correction efficace','Stabilisation retrouvée','Go-around décidé tôt','Go-around tardif','Poursuite malgré instabilité','Saturation / perte de priorité','Intervention examinateur','Non applicable']},
+  {id:'perte_maitrise', label:'Moment où tu as senti perdre la maîtrise', type:'single',
+   opts:['Jamais',"Avant l'interception","À l'interception LOC","À l'interception glide",'Pendant la configuration','Vers 1000 ft','Entre 1000 ft et minima','Aux minima / courte finale',"Après un ordre ATC","À cause du PM","À cause d'une panne","À cause de l'automatisation"]},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:"Comment s'est terminée l'approche ?", type:'single', is_issue:true,
+   opts:['Posé stable','Posé techniquement correct mais dégradé','Posé instable / discutable','Remise de gaz volontaire','Remise de gaz demandée','Approche abandonnée / reset','Intervention examinateur'],
+   autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Approche VOR': [
+  {id:'debut', label:"Comment l'approche a-t-elle débuté ?", type:'single',
+   opts:['Vecteurs radar','STAR / procédure publiée','Interception tardive','Repositionnement après remise de gaz','Suite à une panne','Déjà établi en finale']},
+  {id:'conditions', label:'Conditions de réalisation', type:'multi',
+   opts:['Normal ops','Single engine','Raw data imposé','Météo dégradée','Haute énergie','Forte charge ATC','Approche non préparée','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Capture trajectoire','Gestion énergie','Navigation','CRM','Monitoring','Charge mentale','Automation','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui était principalement évalué', type:'multi', max:3,
+   opts:['Stabilisation','Raw data','Gestion trajectoire','Gestion énergie','TEM','Priorisation','Décision GA','Monitoring','Autre'],
+   hasAutre:true},
+  {id:'degradation', label:"Y a-t-il eu une dégradation ?", type:'multi',
+   opts:['Non','Unstable','Speed excessive','TCAS RA','Windshear','Saturation','Intervention examinateur'],
+   revealIfNotOnlyNon:'reaction'},
+  {id:'reaction', label:'Si dégradation : réaction principale', type:'single', hidden:true,
+   opts:['Correction efficace','Go-around décidé tôt','Go-around tardif','Poursuite malgré instabilité','Intervention examinateur']},
+  {id:'perte_maitrise', label:'Moment où tu as senti perdre la maîtrise', type:'single',
+   opts:['Jamais','À la capture','Pendant la descente','En finale','Aux minima','À cause du PM','Surcharge ATC']},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
+   autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Approche RNAV': [
+  {id:'debut', label:"Comment l'approche a-t-elle débuté ?", type:'single',
+   opts:['Vecteurs radar','STAR / procédure publiée','Interception tardive','Repositionnement après remise de gaz','Suite à une panne','Déjà établi en finale']},
+  {id:'conditions', label:'Conditions de réalisation', type:'multi',
+   opts:['Normal ops','Single engine','Raw data imposé','Météo dégradée','Haute énergie','Forte charge ATC','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Gestion énergie','Navigation FMS','Automation','CRM','Monitoring','Charge mentale','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui était évalué', type:'multi', max:3,
+   opts:['Gestion automatisation','Stabilisation','TEM','SOP','Priorisation','Décision GA','Autre'],
+   hasAutre:true},
+  {id:'degradation', label:"Y a-t-il eu une dégradation ?", type:'multi',
+   opts:['Non','Unstable','Speed excessive','TCAS RA','Saturation','Intervention examinateur'],
+   revealIfNotOnlyNon:'reaction'},
+  {id:'reaction', label:'Si dégradation : réaction principale', type:'single', hidden:true,
+   opts:['Correction efficace','Go-around décidé tôt','Go-around tardif','Poursuite malgré instabilité','Intervention examinateur']},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
+   autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Approche visuelle': [
+  {id:'conditions', label:'Conditions', type:'multi',
+   opts:['Standard','Vent fort','Trafic','Nuit','Transition IMC/VMC','Haute énergie','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Trajectoire visuelle','Gestion énergie','Vent','CRM','Monitoring','Anticipation','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui était évalué', type:'multi', max:3,
+   opts:['Pilotage pur','Stabilisation','Gestion énergie','TEM','SOP','Decision making','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
+   autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Remise de gaz': [
+  {id:'cause', label:'Cause principale', type:'single',
+   opts:['Instabilité','Ordre examinateur','Ordre ATC','TCAS','Windshear','Mauvaise trajectoire','Mauvaise configuration','Panne','Décision préventive PF','Approche perdue']},
+  {id:'decision', label:'La décision était', type:'single',
+   opts:['Très anticipée','Correcte','Tardive','Très tardive','Subie']},
+  {id:'maitrise_ga', label:'Niveau de maîtrise pendant le GA', type:'single',
+   opts:['Très propre','Correct','Désorganisé','Saturé','Perte de conscience situationnelle']},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Gestion trajectoire','Gestion énergie','Automation','Radio','Reconfiguration','CRM','Charge mentale','Navigation','Single engine','Autre'],
+   hasAutre:true},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Décision de GA','SOP','Priorisation','Remise en ordre mentale','Gestion automatisation','Leadership','Stabilisation second essai','Gestion charge','Autre'],
+   hasAutre:true},
+  {id:'situation_apres', label:'Après le GA, la situation était', type:'single',
+   opts:['Immédiatement sous contrôle','Reprise progressive','Encore en surcharge','Perdue','Intervention examinateur']},
+  {id:'type_reposition', label:'Type de repositionnement', type:'single',
+   opts:['Trajectoire GA publiée','Radar vector','Retour à vue','Autre']},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:"Comment le GA s'est-il terminé ?", type:'single', is_issue:true,
+   opts:['Repositionnement propre','Reprise stable','Toujours en difficulté','Intervention examinateur','Exercice interrompu']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Panne / Urgence': [
+  {id:'type_evt', label:"Type d'événement", type:'single',
+   opts:['Panne moteur','Smoke / Fire / Fumes','Hydraulique','Électrique','Pressurisation','Flight controls','Navigation / IRS / ADR','Train / freins','Carburant','TCAS / conflit trafic','Windshear / météo sévère','Medical / cabine','ECAM complexe','Événement multiple','Autre'],
+   revealMap:{'Panne moteur':['moteur_sub']}, hasAutre:true},
+  {id:'moteur_sub', label:'Sous-arbre moteur', type:'submenu', hidden:true, questions:[
+    {id:'m_type', label:'Type de panne moteur', type:'single',
+     opts:['Engine failure simple','Engine fire','Severe damage','Stall / surge','Vibrations','Shutdown demandé','ECAM complexe']},
+    {id:'m_moment', label:'Moment exact', type:'single',
+     opts:['Avant V1','Entre V1 et rotation','Après décollage','En montée','En croisière','En approche','Pendant remise de gaz']},
+    {id:'m_config', label:'Configuration avion', type:'multi',
+     opts:['Clean','Config 1','Config 2','Config 3','FULL','Train sorti','AP ON','AP OFF']},
+    {id:'m_difficile', label:'Ce qui a été le plus difficile', type:'multi', max:2,
+     opts:['Contrôle directionnel','Trajectoire','Speed control','Radio','ECAM','CRM','Navigation','Charge mentale','Raw data','Monomoteur']},
+    {id:'m_retour', label:'Le retour était', type:'multi',
+     opts:['Radar vecteurs','Procédure publiée','Raw data','ILS','RNAV','VOR','Visuel','Météo dégradée']},
+    {id:'m_rupture', label:'Point de rupture principal', type:'single',
+     opts:["Trop vite","Trop d'ATC",'Mauvaise priorisation','Mauvaise répartition PF/PM','Saturation','Mauvais monitoring','Désorganisation','Aucun']}
+  ]},
+  {id:'moment_evt', label:"À quel moment est survenu l'événement ?", type:'single',
+   opts:['Sol','Avant décollage','Après V1','Montée initiale','Croisière','Descente','Approche','Remise de gaz','Après atterrissage']},
+  {id:'surprise', label:'Niveau de surprise ressenti', type:'single',
+   opts:['Très anticipable','Gérable','Déstabilisant','Très déstabilisant','Saturation immédiate']},
+  {id:'tunnel', label:"Y a-t-il eu un effet tunnel ECAM ?", type:'single',
+   opts:['Non','Léger','Important','Très marqué']},
+  {id:'evalue', label:'Principal enjeu évalué', type:'multi', max:3,
+   opts:['Memory items','Contrôle trajectoire','Priorisation','Leadership','CRM','TEM','Gestion charge mentale','Communication','Navigation','Gestion ECAM','Décision','Gestion automatisation','Gestion énergie','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'maitrise', label:'Niveau de maîtrise global', type:'single',
+   opts:['Toujours en avance','Globalement stable','Quelques moments subis','Souvent en retard','Saturation complète']},
+  {id:'issue', label:"Comment l'événement s'est-il terminé ?", type:'single', is_issue:true,
+   opts:['Gestion propre','Gestion correcte mais dégradée','Rattrapé difficilement','Intervention examinateur','Exercice interrompu']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Atterrissage final': [
+  {id:'conditions', label:'Conditions atterrissage', type:'multi',
+   opts:['Standard','Vent fort','Rafales','Low visibility','Wet / contaminée','Single engine','Après remise de gaz','Fatigue mentale élevée','Autre'],
+   hasAutre:true},
+  {id:'automation', label:"Niveau d'automatisation", type:'automation'},
+  {id:'difficulte', label:'Principal facteur de difficulté', type:'multi', max:2,
+   opts:['Gestion énergie','Arrondi','Vent','Axe','Fatigue mentale','Monitoring','Charge mentale','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'pose', label:'Type de posé', type:'single', is_issue:true,
+   opts:['Très propre','Stable et correct','Dégradé mais acceptable','Dur','Long','Désaxé','Intervention examinateur']},
+  {id:'ressenti_global', label:'Ressenti global de fin de séance', type:'single',
+   opts:['Jamais dépassé','Quelques moments subis','Souvent en retard','Saturé','Perte de maîtrise progressive']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+],
+
+'Autre': [
+  {id:'description', label:'Description de la phase', type:'text'},
+  {id:'evalue', label:'Ce qui semblait évalué', type:'multi', max:3,
+   opts:['Pilotage','CRM','TEM','SOP','Priorisation','Gestion charge','Navigation','Communication','Autre'],
+   hasAutre:true},
+  {id:'charge', label:'Niveau de charge mentale', type:'single',
+   opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
+  {id:'issue', label:'Résultat', type:'single', is_issue:true,
+   opts:['Maîtrisé','Dégradé','Intervention examinateur']},
+  {id:'comment', label:'Commentaire libre', type:'text'}
+]
+
+};
+
+let brickCount = 0;
+const brickScores = {};
+const brickAutoAdded = {};
+
+function addBrick(prefillPhase) {
+  brickCount++;
+  const id = 'b_' + brickCount;
+  const container = document.getElementById('timeline-container');
+  const wrap = document.createElement('div');
+  wrap.className = 'brick-wrap';
+  wrap.id = 'wrap_' + id;
+  const arrow = brickCount > 1 ? '<div class="brick-arrow">Suite de la phase précédente</div>' : '';
+  wrap.innerHTML = arrow + '<div class="brick" id="' + id + '">' + buildBrickHTML(id, brickCount) + '</div>';
+  container.appendChild(wrap);
+  if (prefillPhase) {
+    const sel = document.getElementById(id + '_phase_select');
+    if (sel) { sel.value = prefillPhase; onPhaseChange(id, prefillPhase); }
+  }
+
+}
+
+function buildBrickHTML(brickId, num) {
+  const opts = PHASES.map(function(p) {
+    return '<option value="' + p.replace(/"/g,'&quot;') + '">' + p.replace(/</g,'&lt;') + '</option>';
+  }).join('');
+  const conseq = num > 1 ? '<div class="q-block visible-step" id="' + brickId + '_conseq_block"><div class="q-label">Conséquence de la phase précédente</div><div class="q-chips">' +
+    ['N/A','Normale','Aggravation','Récupération','Surcharge','Piège intentionnel','Reset pédagogique'].map(function(o) {
+      return '<span class="chip" data-val="' + o + '" data-brick="' + brickId + '" onclick="TL.consequenceClick(this)">' + o + '</span>';
+    }).join('') + '</div></div>' : '';
+  var bid = brickId;
+  return '<div class="brick-header" onclick="TL.toggleBrick(&quot;' + bid + '&quot;)">' +
+    '<div class="brick-num">' + num + '</div>' +
+    '<div class="brick-title" id="' + bid + '_title">Phase ' + num + '</div>' +
+    '<span class="brick-phase-badge" id="' + bid + '_phase_badge"></span>' +
+    '<span class="brick-issue-badge" id="' + bid + '_issue_badge"></span>' +
+    '<span style="display:flex;gap:0;margin-left:4px">' +
+    '<span class="chip" id="' + bid + '_pf" data-brick="' + bid + '" onclick="TL.pfpmClick(event,this,\'PF\')" style="border-radius:6px 0 0 6px;padding:3px 8px;font-size:11px;font-weight:700;border-right:none">PF</span>' +
+    '<span class="chip" id="' + bid + '_pm" data-brick="' + bid + '" onclick="TL.pfpmClick(event,this,\'PM\')" style="border-radius:0 6px 6px 0;padding:3px 8px;font-size:11px;font-weight:700">PM</span>' +
+    '</span>' +
+    '<button class="brick-remove" onclick="event.stopPropagation();TL.removeBrick(event,&quot;' + bid + '&quot;)" title="Supprimer">✕</button>' +
+    '<span class="brick-chevron">▾</span></div>' +
+    '<div class="brick-body">' +
+    '<div class="q-block visible-step"><div class="q-label">Type de phase</div>' +
+    '<select id="' + bid + '_phase_select" onchange="TL.onPhaseChange(&quot;' + bid + '&quot;,this.value)" style="width:100%;border:1.5px solid #DDE2EE;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;background:#F4F6FA">' + opts + '</select></div>' +
+    conseq +
+    '<div class="gravity-bar-wrap"><span class="gravity-bar-label">Complexité</span><div class="gravity-bar-track"><div class="gravity-bar-fill" id="' + bid + '_gfill"></div></div><span class="gravity-bar-val" id="' + bid + '_gval">—</span></div>' +
+    '<div id="' + bid + '_questions"></div></div>';
+}
+
+function onPhaseChange(brickId, phase) {
+  var badge = document.getElementById(brickId + '_phase_badge');
+  var title = document.getElementById(brickId + '_title');
+  var container = document.getElementById(brickId + '_questions');
+  var issueBadge = document.getElementById(brickId + '_issue_badge');
+  if (badge) { badge.textContent = phase === '— sélectionner —' ? '' : phase; badge.style.display = phase === '— sélectionner —' ? 'none' : 'inline-block'; }
+  if (title) title.textContent = 'Phase ' + getBrickNum(brickId);
+  if (issueBadge) issueBadge.style.display = 'none';
+  brickScores[brickId] = 0;
+  brickAutoAdded[brickId] = false;
+  if (!container) return;
+  var qs = PHASE_QUESTIONS[phase];
+  if (!qs) { container.innerHTML = ''; updateGravityBar(brickId); return; }
+  container.innerHTML = qs.map(function(q, i) { return buildQBlock(brickId, q, i, ''); }).join('');
+  revealFirst(brickId);
+  updateGravityBar(brickId);
+  if (typeof applyTranslations === 'function' && currentLang === 'en') applyTranslations();
+}
+
+function buildQBlock(brickId, q, index, prefix) {
+  var fullId = prefix ? prefix + '_' + q.id : q.id;
+  var domId = brickId + '_q_' + fullId;
+  var hiddenCls = q.hidden ? ' hidden' : '';
+  if (q.type === 'submenu') {
+    var inner = q.questions.map(function(sq, i) { return buildQBlock(brickId, sq, i, q.id); }).join('');
+    return '<div id="' + domId + '" class="q-block timeline-question submenu-block' + hiddenCls + '" data-qid="' + fullId + '" data-index="' + index + '" data-type="submenu"><div class="submenu show"><div class="q-label">' + q.label + '</div>' + inner + '</div></div>';
+  }
+  if (q.type === 'automation') {
+    // AP, FD, ATHR — chaque paire est mutuellement exclusive
+    var pairs = [
+      {on:'AP ON', off:'AP OFF'},
+      {on:'FD ON', off:'FD OFF'},
+      {on:'ATHR ON', off:'ATHR OFF'}
+    ];
+    var pairChips = pairs.map(function(p, pi) {
+      return '<span class="chip" data-val="' + p.on + '" data-brick="' + brickId + '" data-qid="' + fullId + '" data-pair="' + pi + '" data-side="on" onclick="TL.autoChip(this)">' + p.on + '</span>' +
+             '<span class="chip" data-val="' + p.off + '" data-brick="' + brickId + '" data-qid="' + fullId + '" data-pair="' + pi + '" data-side="off" onclick="TL.autoChip(this)">' + p.off + '</span>';
+    }).join('');
+    return '<div id="' + domId + '" class="q-block timeline-question' + hiddenCls + '" data-qid="' + fullId + '" data-index="' + index + '" data-type="automation">' +
+      '<div class="q-label">' + q.label + '</div>' +
+      '<div class="q-chips" style="gap:4px">' + pairChips + '</div></div>';
+  }
+  if (q.type === 'text') {
+    return '<div id="' + domId + '" class="q-block timeline-question' + hiddenCls + '" data-qid="' + fullId + '" data-index="' + index + '" data-type="text"><div class="q-label">' + q.label + '</div><textarea id="' + brickId + '_' + fullId + '" class="q-textarea" placeholder="Commentaires libres…" oninput="TL.textAnswered(this.dataset.brick,this.dataset.qid)" data-brick="' + brickId + '" data-qid="' + fullId + '"></textarea></div>';
+  }
+  var chips = q.opts.map(function(o) {
+    var safe = o.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return '<span class="chip" data-val="' + safe + '" data-brick="' + brickId + '" data-qid="' + fullId + '" onclick="TL.chipClick(this)">' + o + '</span>';
+  }).join('');
+  var hint = q.max ? '<div class="q-hint">Max ' + q.max + ' choix</div>' : '';
+
+  // Champ Vent conditionnel (Tour de piste VFR)
+  var ventField = '';
+  if (q.hasVent) {
+    ventField = '<div id="' + domId + '_vent_wrap" style="display:none;margin-top:6px">' +
+      '<input type="text" id="' + brickId + '_' + fullId + '_vent" class="q-textarea" style="min-height:auto;height:36px;font-size:12px" placeholder="Direction / force du vent (ex: 270° / 15kt)" ' +
+      'data-brick="' + brickId + '"></div>';
+  }
+
+  // Popup "Autre"
+  var autreField = '';
+  if (q.hasAutre) {
+    autreField = '<div id="' + domId + '_autre_wrap" style="display:none;margin-top:6px">' +
+      '<input type="text" id="' + brickId + '_' + fullId + '_autre" class="q-textarea" style="min-height:auto;height:36px;font-size:12px" placeholder="Précisez..." ' +
+      'data-brick="' + brickId + '"></div>';
+  }
+
+  return '<div id="' + domId + '" class="q-block timeline-question' + hiddenCls + '" data-qid="' + fullId + '" data-index="' + index + '" data-type="' + q.type + '">' +
+    '<div class="q-label">' + q.label + '</div>' + hint +
+    '<div class="q-chips">' + chips + '</div>' +
+    ventField + autreField + '</div>';
+}
+
+function revealFirst(brickId) {
+  var qs = [...document.querySelectorAll('#' + brickId + '_questions .timeline-question')];
+  qs.forEach(function(q) { q.classList.add('hidden'); });
+  var first = qs.find(function(q) {
+    var def = findQDef(brickId, q.dataset.qid);
+    return !(def && def.hidden);
+  });
+  if (first) first.classList.remove('hidden');
+}
+function chipClick(el) {
+  var brickId = el.dataset.brick;
+  var qid     = el.dataset.qid;
+  var qDef    = findQDef(brickId, qid);
+  if (!qDef) return;
+
+  var group  = el.closest('.q-chips');
+  var wasOn  = el.classList.contains('on');
+
+  if (qDef.type === 'single') {
+    group.querySelectorAll('.chip').forEach(function(c) {
+      c.classList.remove('on','issue-green','issue-amber','issue-red','issue-dark','issue-danger');
+    });
+    el.classList.add('on');
+  } else {
+    el.classList.toggle('on');
+    if (el.dataset.val === 'Non' && el.classList.contains('on')) {
+      group.querySelectorAll('.chip').forEach(function(c) { if (c !== el) c.classList.remove('on'); });
+    } else if (el.dataset.val !== 'Non' && el.classList.contains('on')) {
+      var non = group.querySelector('.chip[data-val="Non"]');
+      if (non) non.classList.remove('on');
+    }
+    if (qDef.max) {
+      var active = [...group.querySelectorAll('.chip.on')];
+      if (active.length > qDef.max && !wasOn) active[0].classList.remove('on');
+    }
+  }
+
+  if (qDef.is_issue) updateIssueHeader(brickId, el.dataset.val);
+
+  if (qDef.hasAutre) {
+    var autreWrap = document.getElementById(brickId + '_q_' + qid + '_autre_wrap');
+    if (autreWrap) {
+      var hasAutreOn = !!group.querySelector('.chip.on[data-val="Autre"]');
+      autreWrap.style.display = hasAutreOn ? 'block' : 'none';
+    }
+  }
+
+  if (qDef.hasVent) {
+    var ventWrap = document.getElementById(brickId + '_q_' + qid + '_vent_wrap');
+    if (ventWrap) {
+      var hasVentOn = !!group.querySelector('.chip.on[data-val="Vent"]');
+      ventWrap.style.display = hasVentOn ? 'block' : 'none';
+    }
+  }
+
+  applyConditionals(brickId, qDef, group);
+  revealNext(brickId, qid);
+  updateGravityBar(brickId);
+
+  if (qDef.autoAdd && qDef.autoAdd[el.dataset.val] && !brickAutoAdded[brickId]) {
+    brickAutoAdded[brickId] = true;
+    addBrick(qDef.autoAdd[el.dataset.val]);
+  }
+}
+
+
+function applyConditionals(brickId, qDef, group) {
+  if (qDef.revealMap) {
+    Object.values(qDef.revealMap).flat().forEach(function(t) { hideQ(brickId, t); });
+    group.querySelectorAll('.chip.on').forEach(function(chip) {
+      var targets = qDef.revealMap[chip.dataset.val];
+      if (targets) targets.forEach(function(t) { showQ(brickId, t); });
+    });
+  }
+  if (qDef.revealIfNotOnlyNon) {
+    var sel = [...group.querySelectorAll('.chip.on')].map(function(c) { return c.dataset.val; });
+    var show = sel.length > 0 && !(sel.length === 1 && sel[0] === 'Non');
+    show ? showQ(brickId, qDef.revealIfNotOnlyNon) : hideQ(brickId, qDef.revealIfNotOnlyNon);
+  }
+}
+
+function showQ(brickId, targetId) {
+  var el = document.getElementById(brickId + '_q_' + targetId);
+  if (el) { el.classList.remove('hidden'); el.dataset.revealed = '1'; }
+}
+function hideQ(brickId, targetId) {
+  var el = document.getElementById(brickId + '_q_' + targetId);
+  if (!el) return;
+  el.classList.add('hidden');
+  delete el.dataset.revealed;
+  el.querySelectorAll('.chip.on').forEach(function(c) { c.classList.remove('on','issue-green','issue-amber','issue-red','issue-dark','issue-danger'); });
+  el.querySelectorAll('textarea').forEach(function(t) { t.value = ''; });
+}
+
+function revealNext(brickId, currentQid) {
+  var qs = [...document.querySelectorAll('#' + brickId + '_questions .timeline-question')];
+  var idx = qs.findIndex(function(q) { return q.dataset.qid === currentQid; });
+  if (idx < 0) return;
+  for (var i = idx + 1; i < qs.length; i++) {
+    var q = qs[i];
+    if (!q.classList.contains('hidden')) continue;
+    var def = findQDef(brickId, q.dataset.qid);
+    if (def && def.hidden && !q.dataset.revealed) continue;
+    q.classList.remove('hidden');
+    return;
+  }
+}
+function textAnswered(brickId, qid) { revealNext(brickId, qid); }
+
+function pfpmClick(ev, el, role) {
+  if (ev) ev.stopPropagation();
+  var brickId = el.dataset.brick;
+  var pf = document.getElementById(brickId + '_pf');
+  var pm = document.getElementById(brickId + '_pm');
+  if (!pf || !pm) return;
+  pf.classList.remove('on');
+  pm.classList.remove('on');
+  el.classList.add('on');
+}
+
+function autoChip(el) {
+  // Exclusivité AP ON/OFF, FD ON/OFF, ATHR ON/OFF
+  var pair  = el.dataset.pair;
+  var brickId = el.dataset.brick;
+  var group = el.closest('.q-chips');
+  // Désactiver l'autre côté de la même paire
+  var others = group.querySelectorAll('.chip[data-pair="' + pair + '"]');
+  others.forEach(function(c) { c.classList.remove('on'); });
+  el.classList.toggle('on');
+  updateGravityBar(brickId);
+  revealNext(brickId, el.dataset.qid);
+}
+
+function consequenceClick(el) {
+  var group = el.closest('.q-chips');
+  group.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  updateGravityBar(el.dataset.brick);
+}
+
+function findQDef(brickId, qid) {
+  var sel = document.getElementById(brickId + '_phase_select');
+  if (!sel) return null;
+  var qs = PHASE_QUESTIONS[sel.value] || [];
+  function walk(list, prefix) {
+    for (var i = 0; i < list.length; i++) {
+      var q = list[i];
+      var fullId = prefix ? prefix + '_' + q.id : q.id;
+      if (fullId === qid) return q;
+      if (q.type === 'submenu' && q.questions) {
+        var found = walk(q.questions, fullId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return walk(qs, '');
+}
+function computeGravity(brickId) {
+  var brick = document.getElementById(brickId);
+  if (!brick) return 0;
+  var score = 0;
+  brick.querySelectorAll('.chip.on').forEach(function(c) {
+    if (GRAVITY[c.dataset.val]) score += GRAVITY[c.dataset.val];
+  });
+  return score;
+}
+
+function updateGravityBar(brickId) {
+  var score = computeGravity(brickId);
+  brickScores[brickId] = score;
+  var fill = document.getElementById(brickId + '_gfill');
+  var val  = document.getElementById(brickId + '_gval');
+  if (!fill || !val) return;
+  var pct = Math.min(score / 15 * 100, 100);
+  fill.style.width = pct + '%';
+  var level, color;
+  if (score <= 2)      { level = 'Faible';     color = '#10B981'; }
+  else if (score <= 5) { level = 'Modéré';     color = '#F59E0B'; }
+  else if (score <= 9) { level = 'Élevé';      color = '#F97316'; }
+  else                 { level = 'Saturation'; color = '#EF4444'; }
+  fill.style.background = color;
+  var levelTr = (typeof currentLang !== 'undefined' && currentLang === 'en' && TRANSLATIONS && TRANSLATIONS.en)
+    ? (TRANSLATIONS.en[level] || level) : level;
+  val.textContent = levelTr + ' (' + score + ')';
+  val.style.color = color;
+  updateGlobalGravity();
+}
+
+function updateGlobalGravity() {
+  var vals = Object.values(brickScores);
+  var total = vals.reduce(function(a,b){return a+b;},0);
+  var nb = vals.length;
+  var wrap = document.getElementById('global-gravity-wrap');
+  var fill = document.getElementById('global-gravity-fill');
+  var lbl  = document.getElementById('global-gravity-level');
+  if (!wrap || !fill || !lbl) return;
+  if (!nb) { wrap.style.display='none'; return; }
+  wrap.style.display = 'flex';
+  var pct = Math.min(total / (nb * 10) * 100, 100);
+  fill.style.width = pct + '%';
+  var level, color;
+  if (pct <= 25)      { level='Scénario facile';    color='#10B981'; }
+  else if (pct <= 50) { level='Scénario modéré';    color='#F59E0B'; }
+  else if (pct <= 75) { level='Scénario difficile'; color='#F97316'; }
+  else                { level='Scénario extrême';   color='#EF4444'; }
+  fill.style.background = color;
+  var levelTrG = (typeof currentLang !== 'undefined' && currentLang === 'en' && TRANSLATIONS && TRANSLATIONS.en)
+    ? (TRANSLATIONS.en[level] || level) : level;
+  lbl.textContent = levelTrG;
+  lbl.style.color = color;
+}
+
+function updateIssueHeader(brickId, val) {
+  var badge = document.getElementById(brickId + '_issue_badge');
+  if (!badge) return;
+  var colMap = {'issue-green':'#065F46','issue-amber':'#92400E','issue-red':'#C8102E','issue-dark':'#1A2D5A','issue-danger':'#7F1D1D'};
+  var col = ISSUE_COLORS[val] || '';
+  badge.textContent = val;
+  badge.className = 'brick-issue-badge';
+  badge.style.display = 'inline-block';
+  badge.style.background = colMap[col] || '#374151';
+  badge.style.color = 'white';
+}
+
+function removeBrick(e, id) {
+  e.stopPropagation();
+  var wrap = document.getElementById('wrap_' + id);
+  if (wrap) wrap.remove();
+  delete brickScores[id];
+  renumber();
+  updateGlobalGravity();
+}
+
+function toggleBrick(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+function renumber() {
+  document.querySelectorAll('#timeline-container .brick').forEach(function(b, i) {
+    var num = b.querySelector('.brick-num');
+    var title = b.querySelector('.brick-title');
+    if (num) num.textContent = i + 1;
+    if (title) title.textContent = 'Phase ' + (i + 1);
+  });
+}
+
+function getBrickNum(brickId) {
+  var all = [...document.querySelectorAll('#timeline-container .brick')];
+  var idx = all.findIndex(function(b) { return b.id === brickId; });
+  return idx >= 0 ? idx + 1 : brickId.split('_')[1];
+}
+
+function getData() {
+  var bricks = [];
+  var allTags = new Set();
+  document.querySelectorAll('#timeline-container .brick').forEach(function(b, i) {
+    var id = b.id;
+    var sel = document.getElementById(id + '_phase_select');
+    var phase = sel ? sel.value : '';
+    var data = {num:i+1, phase:phase, gravity:brickScores[id]||0, answers:{}, chips:[], comments:{}};
+    b.querySelectorAll('.timeline-question:not(.hidden)').forEach(function(qEl) {
+      var qid = qEl.dataset.qid;
+      var labelEl = qEl.querySelector('.q-label');
+      var label = (labelEl && (labelEl._fr || labelEl.dataset.i18n)) || (labelEl && labelEl.textContent) || qid;
+      var selected = [...qEl.querySelectorAll('.chip.on')].map(function(c){return c.dataset.val;});
+      var ta = qEl.querySelector('textarea');
+      if (selected.length) { data.answers[label]=selected; selected.forEach(function(v){data.chips.push(v);allTags.add(v.toUpperCase().replace(/[^A-Z0-9]/g,'_').substring(0,24));}); }
+      if (ta && ta.value.trim()) data.comments[label] = ta.value.trim();
+      var autre = qEl.querySelector('input[id$="_autre"]');
+      if (autre && autre.value.trim()) data.comments[label + ' / Autre'] = autre.value.trim();
+      var vent = qEl.querySelector('input[id$="_vent"]');
+      if (vent && vent.value.trim()) data.comments[label + ' / Vent'] = vent.value.trim();
+    });
+    bricks.push(data);
+  });
+  return {briques:bricks, tags:[...allTags].join(' '), total_gravity:Object.values(brickScores).reduce(function(a,b){return a+b;},0)};
+}
+
+function getSimData() {
+  var d = getData();
+  return d.briques.map(function(b) {
+    var a = Object.entries(b.answers).map(function(e){return e[0]+': '+e[1].join(', ');}).join(' | ');
+    var c = Object.entries(b.comments).map(function(e){return e[0]+': '+e[1];}).join(' | ');
+    return 'Phase '+b.num+' ['+b.phase+'] gravité:'+b.gravity+(a?' | '+a:'')+(c?' | '+c:'');
+  }).join('\n');
+}
+
+return {addBrick, removeBrick, toggleBrick, onPhaseChange, chipClick, autoChip, pfpmClick, consequenceClick, textAnswered, getData, getSimData};
+})();
+
+
+
+function getGlobalChip(groupId) {
+  var el = document.querySelector('#' + groupId + ' .chip.on');
+  if (!el) return '';
+  // Utiliser data-fr si disponible (valeur stable FR), sinon _fr mémorisé, sinon textContent
+  return el.dataset.fr || el._fr || el.textContent;
+}
+function getGlobalChips(groupId) {
+  return [...document.querySelectorAll('#' + groupId + ' .chip.on')].map(function(c) {
+    return c.dataset.fr || c._fr || c.textContent;
+  }).join(', ');
+}
+// Snapshot de toutes les options compagnie actuelle au chargement
+var _allCompagniesOpts = null;
+
+function onCompagnieEvalChange() {
+  var selActuelle = document.getElementById('f-compagnie');
+  if (!selActuelle) return;
+
+  // Sauvegarder la liste complète une seule fois (avec data-fr/data-en)
+  if (!_allCompagniesOpts) {
+    _allCompagniesOpts = Array.from(selActuelle.options).map(function(o) {
+      return {value: o.value, text: o.textContent, fr: o.dataset.fr || null, en: o.dataset.en || null};
+    });
+  }
+
+  var evalVal = (document.getElementById('f-compagnie-eval') || {}).value || '';
+  var prevVal = selActuelle.value;
+
+  // Reconstruire la liste en excluant la compagnie évaluatrice
+  selActuelle.innerHTML = '';
+  _allCompagniesOpts.forEach(function(o) {
+    if (o.value === evalVal && o.value !== '') return; // exclure l'évaluatrice
+    var opt = document.createElement('option');
+    opt.value = o.value;
+    // Afficher le bon label selon la langue
+    opt.textContent = (currentLang === 'en' && o.en) ? o.en : (o.fr || o.text);
+    if (o.fr) opt.dataset.fr = o.fr;
+    if (o.en) opt.dataset.en = o.en;
+    selActuelle.appendChild(opt);
+  });
+
+  // Restaurer la sélection si toujours valide
+  if (prevVal && prevVal !== evalVal) selActuelle.value = prevVal;
+  else selActuelle.value = '';
+  // Déclencher onCompagnieChange pour mettre à jour le champ Autre si besoin
+  onCompagnieChange();
+
+  // Passages AF : visible seulement si évaluatrice = Air France
+  var passWrap = document.getElementById('f-passages-wrap');
+  if (passWrap) passWrap.style.display = evalVal === 'Air France' ? 'block' : 'none';
+}
+
+function onCompagnieChange() {
+  var sel = document.getElementById('f-compagnie');
+  var val = sel ? sel.value : '';
+  // Champ texte "Autre" compagnie actuelle
+  var autre = document.getElementById('f-compagnie-autre');
+  if (autre) autre.style.display = val === 'Autre' ? 'block' : 'none';
+  // Passages AF : géré uniquement par onCompagnieEvalChange, on ne touche pas ici
+}
+
+function toggleSingleChip(el, groupId) {
+  document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.toggle('on');
+}
+function toggleMultiChip(el, groupId, max) {
+  var wasOn = el.classList.contains('on');
+  el.classList.toggle('on');
+  if (!wasOn) {
+    var actives = document.getElementById(groupId).querySelectorAll('.chip.on');
+    if (actives.length > max) actives[0].classList.remove('on');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  TL.addBrick();
+  // Machine eval Autre
+  document.querySelectorAll('#grp-machine-eval .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var autre = document.getElementById('f-machine-eval-autre');
+      var isAutre = !!document.querySelector('#grp-machine-eval .chip.on[data-fr="Autre"]');
+      if (autre) autre.style.display = isAutre ? 'block' : 'none';
+    });
+  });
+  onCompagnieEvalChange();
+  onCompagnieChange();
+  window.scrollTo(0, 0);
+});
+
+// ════════════════════════════════════════════════════
+// COLLECTE GLOBALE DES DONNÉES
+// ════════════════════════════════════════════════════
+function collectData() {
+  var timeline = TL.getData();
+  return {
+    nom: (document.getElementById('f-nom')||{}).value||'',
+    date: (document.getElementById('f-date')||{}).value||'',
+    terrain: (document.getElementById('f-terrain')||{}).value||'',
+    email: (document.getElementById('f-email')||{}).value||'',
+    resultat: (document.getElementById('f-result')||{}).value||'',
+    type_eval: getCheckedValues('grp-type').join(', '),
+    compagnie_eval: (document.getElementById('f-compagnie-eval')||{}).value||'',
+    machine_eval: (function(){var c=[...document.querySelectorAll('#grp-machine-eval .chip.on')];return c.map(function(x){return x.dataset.fr||x._fr||x.textContent;}).join(', ');}()),
+    nb_candidats: getGlobalChip('grp-nb-candidats'),
+    nb_examinateurs: getGlobalChip('grp-nb-exo'),
+    langue_seance: getGlobalChip('grp-langue'),
+    role_seance: getGlobalChip('grp-role-seance'),
+    scenario_match: getGlobalChip('grp-scenario-match'),
+    elements_inattendus: getGlobalChip('grp-inattendu'),
+    details_inattendus: (document.getElementById('f-inattendu')||{}).value||'',
+    resultat_place: getGlobalChip('grp-resultat-place'),
+    compagnie: (document.getElementById('f-compagnie')||{}).value||'',
+    machine: (document.getElementById('f-machine')||{}).value||'',
+    hdv: (document.getElementById('f-hdv')||{}).value||'',
+    multicrew: (document.getElementById('f-mc')||{}).value||'',
+    ifr: (document.getElementById('f-ifr')||{}).value||'',
+    passages: (document.getElementById('f-passages')||{}).value||'',
+    examinateur: '',
+    organisation: getCheckedValues('grp-orga').join(', '),
+    attitude: getCheckedValues('grp-attitude').join(', '),
+    stress: getRadioValue('stress'),
+    charge: getRadioValue('charge'),
+    difficulte: getRadioValue('diff'),
+    ressenti: (document.getElementById('f-ressenti')||{}).value||'',
+    sujets_briefing: getCheckedValues('grp-briefing').join(', '),
+    niveau_briefing: getCheckedValues('grp-niv-briefing').join(', '),
+    duree_briefing: (document.getElementById('f-duree-briefing')||{}).value||'',
+    questions: (document.getElementById('f-questions')||{}).value||'',
+    exo_comment: getGlobalChip('grp-exo-comment'),
+    global_difficulte:   getGlobalChip('global_difficulte'),
+    global_charge:       getGlobalChip('global_charge'),
+    global_fatigue:      getGlobalChip('global_fatigue'),
+    global_sensation:    getGlobalChip('global_sensation'),
+    global_style_exo:    getGlobalChip('global_style_exo'),
+    global_comportements:getGlobalChips('global_comportements'),
+    sim_data: TL.getSimData(),
+    tags: timeline.tags + ' gravité:' + timeline.total_gravity,
+    pts_evalues: getCheckedValues('grp-eval').join(', '),
+    difference: (document.getElementById('f-difference')||{}).value||'',
+    erreurs: getCheckedValues('grp-erreurs').join(', '),
+    erreur_principale: (document.getElementById('f-erreur-principale')||{}).value||'',
+    erreur_gestion: (document.getElementById('f-erreur-gestion')||{}).value||'',
+    utile: (document.getElementById('f-utile')||{}).value||'',
+    insuf: (document.getElementById('f-insuf')||{}).value||'',
+    proche: (document.getElementById('f-proche')||{}).value||'',
+    different: (document.getElementById('f-different')||{}).value||'',
+    ameliorer: (document.getElementById('f-ameliorer')||{}).value||'',
+    debrief: (document.getElementById('f-debrief')||{}).value||'',
+    axes: (document.getElementById('f-axes')||{}).value||'',
+    ressenti_final: (document.getElementById('f-ressenti-final')||{}).value||'',
+    retex_libre: (document.getElementById('f-libre')||{}).value||'',
     submitted_at: new Date().toISOString()
-  }).eq('token', _retexToken);
+  };
+}
 
-  if(error) {
-    btn.textContent='Envoyer mon retex →'; btn.disabled=false;
-    errEl.style.display='block'; errEl.textContent='Erreur : '+error.message;
+// ════════════════════════════════════════════════════
+// AIRTABLE
+// ════════════════════════════════════════════════════
+async function pushToAirtable(data) {
+  var res = await fetch('https://api.airtable.com/v0/' + CONFIG.AIRTABLE_BASE_ID + '/' + encodeURIComponent(CONFIG.AIRTABLE_TABLE_NAME), {
+    method:'POST',
+    headers:{'Authorization':'Bearer ' + CONFIG.AIRTABLE_TOKEN,'Content-Type':'application/json'},
+    body: JSON.stringify({fields:{
+      'Name': data.nom, 'Date': data.date, 'Terrain': data.terrain, 'Email': data.email, 'Compagnie eval': data.compagnie_eval,
+      'Résultat': data.resultat, 'Type eval': data.type_eval, 'Compagnie': data.compagnie,
+      'Machine': data.machine, 'HDV': data.hdv, 'Multi-crew': data.multicrew,
+      'IFR': data.ifr, 'Passages AF': data.passages, 'Examinateur': data.examinateur,
+      'Organisation': data.organisation, 'Attitude exo': data.attitude,
+      'Stress': Number(data.stress)||0, 'Charge mentale': Number(data.charge)||0,
+      'Difficulté': Number(data.difficulte)||0, 'Ressenti': data.ressenti,
+      'Sujets briefing': data.sujets_briefing, 'Niveau briefing': data.niveau_briefing,
+      'Durée briefing': data.duree_briefing, 'Questions': data.questions, 'Sim déroulé': data.sim_data,
+      'Points évalués': data.pts_evalues, 'Différence': data.difference,
+      'Erreurs': data.erreurs, 'Erreur principale': data.erreur_principale,
+      'Gestion erreur': data.erreur_gestion, 'Coaching utile': data.utile,
+      'Coaching insuf': data.insuf, 'Proche simu': data.proche,
+      'Différent coaching': data.different, 'À améliorer': data.ameliorer,
+      'Débrief exo': data.debrief, 'Axes amélio': data.axes,
+      'Ressenti final': data.ressenti_final, 'RETEX libre': data.retex_libre,
+      'Global difficulté': data.global_difficulte,
+      'Global charge': data.global_charge,
+      'Global fatigue': data.global_fatigue,
+      'Global sensation': data.global_sensation,
+      'Global style exo': data.global_style_exo,
+      'Global comportements': Array.isArray(data.global_comportements) ? data.global_comportements.join(', ') : (data.global_comportements||''),
+      'Tags': data.tags,
+      'Soumis le': data.submitted_at
+    }})
+  });
+  if (!res.ok) { var err = await res.json(); throw new Error('Airtable: ' + (err.error?.message || res.status)); }
+  return res.json();
+}
+
+// ════════════════════════════════════════════════════
+// EMAIL
+// ════════════════════════════════════════════════════
+async function sendEmail(data) {
+  var body = '';
+  body += 'RETEX — ' + data.nom + ' — ' + data.date + '\n';
+  body += 'Terrain : ' + data.terrain + ' | Résultat : ' + data.resultat + '\n';
+  body += 'Compagnie : ' + data.compagnie + ' | Machine : ' + data.machine + '\n';
+  body += 'HDV : ' + data.hdv + ' | Stress : ' + data.stress + '/5 | Charge : ' + data.charge + '/5\n\n';
+  body += '--- TIMELINE ---\n' + data.sim_data + '\n\n';
+  body += '--- BRIEFING ---\n' + data.questions + '\n\n';
+  body += '--- DÉBRIEF EXAMINATEUR ---\n' + data.debrief + '\n\n';
+  body += '--- RETEX LIBRE ---\n' + data.retex_libre;
+  if (body.length > 45000) body = body.substring(0, 45000) + '\n[...tronqué]';
+  var params = {candidate_name:data.nom||'Candidat', candidate_email:data.email, date:data.date, resultat:data.resultat||'—', summary:body, reply_to:data.email};
+  await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, Object.assign({}, params, {to_email:CONFIG.COACH_EMAIL, reply_to:data.email}));
+  if (data.email) {
+    await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, Object.assign({}, params, {to_email:data.email, summary:'Bonjour ' + (data.nom||'') + ',\n\nTon retex du ' + (data.date||'') + ' a bien été reçu. Merci !\n\nSIMPREP PARIS 🇫🇷', reply_to:CONFIG.COACH_EMAIL}));
+  }
+}
+
+// ════════════════════════════════════════════════════
+// PROGRESS & STATUS
+// ════════════════════════════════════════════════════
+function setProgress(pct, label) {
+  var fill = document.getElementById('progress-fill');
+  var lbl  = document.getElementById('progress-label');
+  if (fill) fill.style.width = pct + '%';
+  if (lbl)  lbl.textContent  = label;
+}
+function showProgress() {
+  var el = document.getElementById('progress-wrap');
+  if (el) el.style.display = 'block';
+}
+function showStatus(type, msg) {
+  var el = document.getElementById('status-msg');
+  if (!el) return;
+  el.className = 'status-msg ' + type;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ════════════════════════════════════════════════════
+// MAIN SUBMIT
+// ════════════════════════════════════════════════════
+async function submitRetex() {
+  var data = collectData();
+  if (!data.nom)   { showStatus('error','⚠️ Merci de renseigner ton nom / prénom.'); return; }
+  if (!data.email) { showStatus('error','⚠️ Merci d\'entrer ton adresse email.'); return; }
+  if (!data.date)  { showStatus('error','⚠️ Merci de renseigner la date du simulateur.'); return; }
+  var btn = document.getElementById('btn-send');
+  btn.disabled = true;
+  showProgress();
+  showStatus('loading','⏳ Envoi en cours…');
+  try {
+    setProgress(20, '📋 Enregistrement dans Airtable…');
+    try { await pushToAirtable(data); setProgress(40,'✅ Airtable OK…'); }
+    catch(e) { throw new Error('Airtable: ' + (e?.message||JSON.stringify(e))); }
+    setProgress(60, '📧 Envoi email…');
+    try { await sendEmail(data); setProgress(80,'✅ Email OK…'); }
+    catch(e) { throw new Error('EmailJS: ' + (e?.text||e?.message||JSON.stringify(e))); }
+    setProgress(100,'✅ Envoi terminé !');
+    showStatus('success','✅ Retex envoyé avec succès ! Merci ' + (data.nom||'') + ' 🙏');
+    btn.textContent = '✅ Retex envoyé !';
+    btn.style.background = '#065F46';
+  } catch(err) {
+    console.error(err);
+    showStatus('error','❌ Erreur : ' + (err?.message||err?.text||JSON.stringify(err)));
+    btn.disabled = false;
+    setProgress(0,'');
+  }
+}
+
+// ════════════════════════════════════════════════════
+// QR CODE
+// ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// LANGUE
+// ════════════════════════════════════════════════
+var currentLang = 'fr';
+
+var TRANSLATIONS = {
+  en: {
+  '+ Ajouter une phase': '+ Add a phase',
+  'AUTO-ÉVALUATION PAR DOMAINE': 'SELF-ASSESSMENT BY DOMAIN',
+  'Accélération du rythme': 'Increase in pace',
+  'Aide implicite': 'Implicit help',
+  'Airbus narrow': 'Airbus narrow-body',
+  'Airbus wide': 'Airbus wide-body',
+  'Ajouter une phase': 'Add a phase',
+  'Alignement': 'Line-up / Alignment',
+  'Ambiance, facteurs de stress, surprises…': 'Atmosphere, stress factors, surprises…',
+  'Approche': 'Approach',
+  'Approche abandonnée / reset': 'Aborted approach / reset',
+  'Approche non préparée': 'Unprepared approach',
+  'Approche non préparée ou briefing incomplet': 'Unprepared approach or incomplete briefing',
+  'Approche perdue': 'Lost approach',
+  'Après V1': 'After V1',
+  'Après atterrissage': 'After landing',
+  'Après décollage': 'After takeoff',
+  'Après le GA, la situation était': 'After the go-around, the situation was',
+  'Après panne': 'After the failure',
+  'Après remise de gaz': 'After go-around',
+  'Après un GA': 'After a go-around',
+  'Après une panne': 'After a failure',
+  'Après événement déstabilisant': 'After a destabilizing event',
+  'Arrondi': 'Flare',
+  'Assessment CDB': 'Captain assessment',
+  'Assessment FO': 'FO assessment',
+  'Attitude des examinateurs': 'Examiners\' attitude',
+  'Aucun': 'None',
+  'Aucun commentaire examinateur': 'No examiner comment',
+  'Aucun facteur notable': 'No notable factor',
+  'Aucune': 'None',
+  'Autre': 'Other',
+  'Aux minima': 'At minima',
+  'Avant V1': 'Before V1',
+  'Avant décollage': 'Before takeoff',
+  'Axe': 'Tracking',
+  'Axe dégradé': 'Degraded tracking',
+  'Axe piste': 'Runway centerline',
+  'Axes d\'amélioration mentionnés': 'Areas for improvement mentioned',
+  'BRIEFING SOL': 'GROUND BRIEFING',
+  'Beaucoup d\'ATC': 'A lot of ATC',
+  'Binôme': 'Pair / Crew pair',
+  'Boeing narrow': 'Boeing narrow-body',
+  'Boeing wide': 'Boeing wide-body',
+  'Briefing TEM effectué': 'TEM briefing completed',
+  'Briefing complet': 'Complete briefing',
+  'Briefing correct mais incomplet': 'Correct but incomplete briefing',
+  'Briefing décollage': 'Takeoff briefing',
+  'Briefing interrompu': 'Interrupted briefing',
+  'Briefing précipité': 'Rushed briefing',
+  'CONTEXTE & AMBIANCE': 'CONTEXT & ATMOSPHERE',
+  'CRM PF/PM': 'PF/PM CRM',
+  'Capacité d\'adaptation': 'Ability to adapt',
+  'Capacité à ralentir': 'Ability to slow down',
+  'Capacité à ralentir / reprendre': 'Ability to slow down / recover',
+  'Capture trajectoire': 'Path capture',
+  'Carburant': 'Fuel',
+  'Cause principale': 'Main cause',
+  'Ce qu\'il faudrait ajouter / améliorer': 'What should be added / improved',
+  'Ce que tu aurais voulu travailler davantage…': 'What you would have liked to work on more…',
+  'Ce que tu ferais différemment…': 'What you would do differently…',
+  'Ce qui a été le plus difficile': 'What was the most difficult',
+  'Ce qui semblait évalué': 'What seemed to be assessed',
+  'Ce qui t\'a le plus aidé…': 'What helped you the most…',
+  'Ce qui était différent du coaching': 'What was different from the coaching',
+  'Ce qui était principalement évalué': 'What was mainly assessed',
+  'Ce qui était proche du vrai simu': 'What was close to the real sim',
+  'Ce qui était évalué': 'What was assessed',
+  'Changement piste tardif': 'Late runway change',
+  'Changement plan de vol': 'Flight plan change',
+  'Changement tardif': 'Late change',
+  'Changement tardif de piste': 'Late runway change',
+  'Charge mentale': 'Mental workload',
+  'Charge mentale globale ressentie': 'Overall perceived mental workload',
+  'Charge radio': 'Radio workload',
+  'Charge élevée maîtrisée': 'High workload under control',
+  'Citez le plus fidèlement possible…': 'Quote as accurately as possible…',
+  'Clairance complexe': 'Complex clearance',
+  'Clique sur les segments colorés pour noter de 1 à 5.': 'Click on the colored segments to rate from 1 to 5.',
+  'Comment aurais-tu dû la gérer ?': 'How should you have handled it?',
+  'Comment tu te sens, ce que tu retiens…': 'How you feel, what you take away…',
+  'Commentaire libre': 'Free comment',
+  'Commentaires exacts de l\'examinateur': 'Examiner\'s exact comments',
+  'Commentaires libres…': 'Free comments…',
+  'Commentaires sur le ressenti': 'Comments on how it felt',
+  'Communication PF/PM': 'PF/PM communication',
+  'Compagnie actuelle': 'Current airline',
+  'Compagnie évaluatrice': 'Assessing airline',
+  'Complexité': 'Complexity',
+  'Comportements examinateurs marquants (max 3)': 'Notable examiner behaviors (max 3)',
+  'Conditions atterrissage': 'Landing conditions',
+  'Conditions de départ': 'Departure conditions',
+  'Conditions de roulage': 'Taxi conditions',
+  'Conditions de réalisation': 'Execution conditions',
+  'Conditions particulières': 'Special conditions',
+  'Configuration avion': 'Aircraft configuration',
+  'Configuration de départ': 'Initial configuration',
+  'Connaissances théoriques': 'Theoretical knowledge',
+  'Conscience de la situation': 'Situation awareness',
+  'Conscience situationnelle': 'Situational awareness',
+  'Construis ta séance phase par phase dans l\'ordre chronologique. Chaque phase déroule ses questions automatiquement.': 'Build your session phase by phase in chronological order. Each phase automatically unfolds its questions.',
+  'Conséquence de la phase précédente': 'Consequence of the previous phase',
+  'Contexte de croisière': 'Cruise context',
+  'Contexte de montée': 'Climb context',
+  'Contexte descente': 'Descent context',
+  'Contrôle directionnel': 'Directional control',
+  'Contrôle total': 'Full control',
+  'Contrôle trajectoire': 'Flight path control',
+  'Correct avec petites erreurs': 'Correct with minor errors',
+  'Correcte': 'Correct',
+  'Correction efficace': 'Effective correction',
+  'Correction tardive': 'Late correction',
+  'Croisière': 'Cruise',
+  'Crosscheck': 'Cross-check',
+  'DYNAMIQUE GLOBALE DE SÉANCE — à remplir en premier': 'OVERALL SESSION DYNAMICS — fill in first',
+  'Date du simulateur': 'Simulator date',
+  'Descente': 'Descent',
+  'Description de la phase': 'Phase description',
+  'Difficile': 'Difficult',
+  'Direction / force du vent (ex: 270° / 15kt)': 'Wind direction / strength (e.g. 270° / 15kt)',
+  'Discipline SOP': 'SOP discipline',
+  'Document confidentiel — usage coaching uniquement': 'Confidential document — coaching use only',
+  'Dur': 'Hard',
+  'Durée du briefing': 'Briefing duration',
+  'DÉBRIEF FINAL EXAMINATEUR': 'FINAL EXAMINER DEBRIEF',
+  'Dès le briefing': 'From the briefing onward',
+  'Début simu': 'Start of sim',
+  'Décision': 'Decision',
+  'Décision GA': 'Go-around decision',
+  'Décision de GA': 'Go-around decision',
+  'Décision de remise de gaz': 'Go-around decision',
+  'Décision préventive PF': 'Preventive PF decision',
+  'Décris le moment clé…': 'Describe the key moment…',
+  'Dégradation progressive': 'Progressive degradation',
+  'Dégradé': 'Degraded',
+  'Dégradé mais acceptable': 'Degraded but acceptable',
+  'Dégradé mais récupéré': 'Degraded but recovered',
+  'Déjà établi en finale': 'Already established on final',
+  'Départ particulier / complexe': 'Special / complex departure',
+  'Désaxé': 'Off track',
+  'Désorganisation': 'Disorganization',
+  'Désorganisé': 'Disorganized',
+  'Déstabilisant': 'Destabilizing',
+  'Déstabilisants': 'Destabilizing factors',
+  'ECAM complexe': 'Complex ECAM',
+  'ECAM en cours / panne non totalement traitée': 'ECAM ongoing / failure not fully handled',
+  'EN ATTENTE': 'WAITING',
+  'ERREURS / DIFFICULTÉS RENCONTRÉES': 'ERRORS / DIFFICULTIES ENCOUNTERED',
+  'En approche': 'On approach',
+  'En croisière': 'In cruise',
+  'En finale': 'On final',
+  'En groupe de plusieurs candidats': 'In a group of several candidates',
+  'En montée': 'In climb',
+  'Encore en surcharge': 'Still overloaded',
+  'Engine failure simple': 'Simple engine failure',
+  'Entre V1 et rotation': 'Between V1 and rotation',
+  'Envoyer mon retex': 'Send my feedback',
+  'Erreur notable': 'Notable error',
+  'Erreur notable ?': 'Notable error?',
+  'Erreur principale': 'Main error',
+  'Exercice interrompu': 'Exercise interrupted',
+  'Exercices de mania': 'Handling exercises',
+  'Exercices navigation': 'Navigation exercises',
+  'Exercices, situations, ambiance…': 'Exercises, situations, atmosphere…',
+  'Exigeants': 'Demanding',
+  'Extrême': 'Extreme',
+  'Faible': 'Low',
+  'Fatigue / saturation déjà présente': 'Fatigue / saturation already present',
+  'Fatigue mentale': 'Mental fatigue',
+  'Fatigue mentale élevée': 'High mental fatigue',
+  'Fermer': 'Close',
+  'Fin de séance': 'End of session',
+  'Formulaire de retour d\'expérience candidat · Confidentiel coaching': 'Candidate feedback form · Coaching confidential',
+  'Forte': 'High',
+  'Forte charge ATC': 'High ATC workload',
+  'Forte charge mentale dès le départ': 'High mental workload from the start',
+  'Forte densité radio': 'High radio density',
+  'Forte densité trafic': 'High traffic density',
+  'Gestion ECAM': 'ECAM management',
+  'Gestion altitude': 'Altitude management',
+  'Gestion automatisation': 'Automation management',
+  'Gestion charge': 'Workload management',
+  'Gestion charge mentale': 'Mental workload management',
+  'Gestion correcte': 'Correct management',
+  'Gestion correcte mais dégradée': 'Correct management but degraded',
+  'Gestion modes': 'Mode management',
+  'Gestion panne': 'Failure management',
+  'Gestion pression temporelle': 'Time pressure management',
+  'Gestion propre': 'Clean management',
+  'Gestion temporelle': 'Time management',
+  'Gestion temps': 'Time management',
+  'Gestion trajectoire': 'Flight path management',
+  'Gestion vitesse': 'Speed management',
+  'Gestion énergie': 'Energy management',
+  'Globalement confortable': 'Overall comfortable',
+  'Globalement stable': 'Overall stable',
+  'Go-around décidé tôt': 'Go-around decided early',
+  'Go-around tardif': 'Late go-around',
+  'Guidage direct intercept LOC': 'Direct LOC intercept guidance',
+  'Gérable': 'Manageable',
+  'HDV Total': 'Total flight hours',
+  'Haute énergie': 'High energy',
+  'Hydraulique': 'Hydraulic',
+  'IFR estimé': 'Estimated IFR time',
+  'INFORMATIONS GÉNÉRALES': 'GENERAL INFORMATION',
+  'Immédiatement sous contrôle': 'Immediately under control',
+  'Important': 'Significant',
+  'Instabilité': 'Instability',
+  'Instable': 'Unstable',
+  'Instructions ATC rapides': 'Fast ATC instructions',
+  'Interception / trajectoire': 'Interception / flight path',
+  'Interception raw data': 'Raw data interception',
+  'Interception tardive': 'Late interception',
+  'Interruptions fréquentes': 'Frequent interruptions',
+  'Intervention examinateur': 'Examiner intervention',
+  'Issue du décollage': 'Outcome of takeoff',
+  'Jamais': 'Never',
+  'Jamais dépassé': 'Never overwhelmed',
+  'Je ne sais pas': 'I don\'t know',
+  'L\'examinateur a-t-il commenté ?': 'Did the examiner comment?',
+  'LOC seul': 'LOC only',
+  'La décision était': 'The decision was',
+  'Le retour était': 'The return was',
+  'Leadership PF': 'PF leadership',
+  'Lecture chart': 'Chart reading',
+  'Limite par moments': 'At the limit at times',
+  'Léger': 'Light',
+  'Machine actuelle': 'Current aircraft type',
+  'Mania': 'Handling',
+  'Mauvais callout': 'Wrong callout',
+  'Mauvais mode': 'Wrong mode',
+  'Mauvais monitoring': 'Poor monitoring',
+  'Mauvais virage': 'Wrong turn',
+  'Mauvaise annonce': 'Wrong call',
+  'Mauvaise configuration': 'Wrong configuration',
+  'Mauvaise décision': 'Wrong decision',
+  'Mauvaise gestion config': 'Poor configuration management',
+  'Mauvaise préparation': 'Poor preparation',
+  'Mauvaise trajectoire': 'Poor flight path',
+  'Maîtrisé': 'Controlled',
+  'Medical / cabine': 'Medical / cabin',
+  'Milieu de séance': 'Mid-session',
+  'Mise en poussée': 'Thrust application',
+  'Modéré': 'Moderate',
+  'Modérée': 'Moderate',
+  'Moment critique ressenti': 'Perceived critical moment',
+  'Moment exact': 'Exact moment',
+  'Moment où la fatigue mentale est apparue': 'Moment when mental fatigue appeared',
+  'Moment où tu as senti perdre la maîtrise': 'Moment when you felt you were losing control',
+  'Monitoring PM': 'PM monitoring',
+  'Monomoteur': 'Single-engine',
+  'Montée initiale': 'Initial climb',
+  'Multitâches': 'Multitasking',
+  'Météo / visibilité': 'Weather / visibility',
+  'Météo dégradée': 'Degraded weather',
+  'Navigation FMS': 'FMS navigation',
+  'Navigation sol': 'Ground navigation',
+  'Nettoyage avion': 'Aircraft cleanup',
+  'Neutres': 'Neutral',
+  'Niveau de charge mentale': 'Level of mental workload',
+  'Niveau de maîtrise global': 'Overall level of control',
+  'Niveau de maîtrise pendant le GA': 'Level of control during the go-around',
+  'Niveau de pression ressentie': 'Perceived pressure level',
+  'Niveau de récupération après GA': 'Recovery level after go-around',
+  'Niveau de surprise ressenti': 'Perceived surprise level',
+  'Niveau du briefing': 'Briefing level',
+  'Niveau global de difficulté': 'Overall difficulty level',
+  'Nom / Prénom': 'Surname / First name',
+  'Non': 'No',
+  'Non applicable': 'Not applicable',
+  'Non encore embauché': 'Not hired yet',
+  'Non type rated': 'Non type-rated',
+  'Normale': 'Normal',
+  'Notez le plus précisément chaque question, dans l\'ordre…': 'Note each question as precisely as possible, in order…',
+  'Nuit': 'Night',
+  'Ordre ATC': 'ATC instruction',
+  'Ordre examinateur': 'Examiner instruction',
+  'Organisation de la session': 'Session organization',
+  'Oubli SOP': 'SOP omission',
+  'Oui': 'Yes',
+  'Oui, brièvement': 'Yes, briefly',
+  'Oui, commentaires détaillés': 'Yes, detailed comments',
+  'POINTS QUI ONT SEMBLÉ ÉVALUÉS': 'POINTS THAT SEEMED TO BE ASSESSED',
+  'Panne': 'Failure',
+  'Panne moteur': 'Engine failure',
+  'Partage PF/PM': 'PF/PM task sharing',
+  'Partie insuffisamment préparée': 'Insufficiently prepared part',
+  'Partie la plus utile': 'Most useful part',
+  'Partiellement': 'Partially',
+  'Pas de briefing structuré': 'No structured briefing',
+  'Pas encore embauché': 'Not hired yet',
+  'Passages AF précédents': 'Previous AF attempts',
+  'Pendant la descente': 'During descent',
+  'Pendant remise de gaz': 'During go-around',
+  'Perdue': 'Lost',
+  'Performance limite': 'Marginal performance',
+  'Perte de CRM': 'Loss of CRM',
+  'Perte de conscience situationnelle': 'Loss of situational awareness',
+  'Perte de maîtrise progressive': 'Progressive loss of control',
+  'Pilotage': 'Flying',
+  'Pilotage pur': 'Pure flying',
+  'Pilotage raw data': 'Raw data flying',
+  'Piste contaminée': 'Contaminated runway',
+  'Pièges automation': 'Automation traps',
+  'Point de rupture principal': 'Main breaking point',
+  'Points clés discriminants…': 'Key differentiating points…',
+  'Points spécifiques soulevés…': 'Specific points raised…',
+  'Posé dégradé': 'Degraded landing',
+  'Posé instable / discutable': 'Unstable / questionable landing',
+  'Posé stable': 'Stable landing',
+  'Posé techniquement correct mais dégradé': 'Technically correct but degraded landing',
+  'Poursuite malgré instabilité': 'Continued despite instability',
+  'Premier virage': 'First turn',
+  'Pression examinateur': 'Examiner pressure',
+  'Pression temporelle': 'Time pressure',
+  'Pressurisation': 'Pressurization',
+  'Principal enjeu évalué': 'Main item being assessed',
+  'Principal facteur de difficulté': 'Main difficulty factor',
+  'Priorisation': 'Prioritization',
+  'Priorités PF/PM': 'PF/PM priorities',
+  'Prise du G/S avant le LOC': 'G/S capture before LOC',
+  'Pro': 'Professional',
+  'Procédure mal préparée': 'Poorly prepared procedure',
+  'Procédure publiée': 'Published procedure',
+  'Précisez le type…': 'Specify the type…',
+  'Précisez votre compagnie…': 'Specify your airline…',
+  'Précisez...': 'Specify…',
+  'Préparation arrivée': 'Arrival preparation',
+  'Qu\'est-ce qui faisait réellement la différence ?': 'What really made the difference?',
+  'Quelques hésitations': 'A few hesitations',
+  'Quelques moments subis': 'A few reactive moments',
+  'Questions techniques posées': 'Technical questions asked',
+  'RETEX LIBRE': 'FREE FEEDBACK',
+  'RETEX ÉVALUATION SIMULATEUR': 'SIMULATOR ASSESSMENT FEEDBACK',
+  'RETOUR SUR LE COACHING': 'FEEDBACK ON THE COACHING',
+  'Raconte librement — tout détail important': 'Tell it freely — any important detail',
+  'Radar vecteurs': 'Radar vectors',
+  'Rafales': 'Gusts',
+  'Rattrapé difficilement': 'Recovered with difficulty',
+  'Raw data imposé': 'Raw data imposed',
+  'Recadrage fréquent': 'Frequent refocusing / correction',
+  'Reclearance fréquente': 'Frequent re-clearance',
+  'Reclearances fréquentes': 'Frequent re-clearances',
+  'Relecture du support': 'Review of the briefing material',
+  'Remise de gaz': 'Go-around',
+  'Remise de gaz demandée': 'Go-around requested',
+  'Remise de gaz volontaire': 'Voluntary go-around',
+  'Remise en ordre mentale': 'Mental reset',
+  'Rentrée des traînées': 'Drag cleanup',
+  'Repositionnement après remise de gaz': 'Repositioning after go-around',
+  'Repositionnement propre': 'Clean repositioning',
+  'Repositionnement rapide': 'Quick repositioning',
+  'Reprise conscience situationnelle': 'Regained situational awareness',
+  'Reprise de maîtrise': 'Regained control',
+  'Reprise progressive': 'Progressive recovery',
+  'Reprise stable': 'Stable recovery',
+  'Respect SOP / callouts': 'SOP / callout compliance',
+  'Ressenti final personnel': 'Personal final feeling',
+  'Ressenti global de fin de séance': 'Overall feeling at end of session',
+  'Retard sur la situation': 'Behind the situation',
+  'Retour autonome': 'Autonomous return',
+  'Retour panne / situation dégradée': 'Failure return / degraded situation',
+  'Retour à vue': 'Visual return',
+  'Résultat': 'Result',
+  'Résultat global': 'Overall result',
+  'Résultat interception': 'Interception result',
+  'Rétraction volets': 'Flap retraction',
+  'STAR / procédure publiée': 'STAR / published procedure',
+  'Saturation / perte de priorité': 'Saturation / loss of priorities',
+  'Saturation complète': 'Full saturation',
+  'Saturation déjà présente': 'Saturation already present',
+  'Saturation immédiate': 'Immediate saturation',
+  'Saturé': 'Saturated',
+  'Scannez ce QR code ou copiez le lien pour accéder au retex.': 'Scan this QR code or copy the link to access the feedback form.',
+  'Scénario difficile': 'Difficult scenario',
+  'Scénario extrême': 'Extreme scenario',
+  'Scénario facile': 'Easy scenario',
+  'Scénario modéré': 'Moderate scenario',
+  'Sensation dominante pendant la séance': 'Dominant feeling during the session',
+  'Setup complexe': 'Complex setup',
+  'Setup partiellement effectué': 'Setup partially completed',
+  'Seul candidat': 'Only candidate',
+  'Shutdown demandé': 'Shutdown requested',
+  'Si dégradation : réaction principale': 'If degraded: main reaction',
+  'Silence prolongé': 'Prolonged silence',
+  'Situation récupérée': 'Situation recovered',
+  'Sol': 'Ground',
+  'Sous pression': 'Under pressure',
+  'Sous radar vector': 'Under radar vectors',
+  'Sous-arbre moteur': 'Engine sub-tree',
+  'Soutenu': 'Sustained',
+  'Souvent en retard': 'Often behind',
+  'Speed excessive': 'Excessive speed',
+  'Stabilisation': 'Stabilization',
+  'Stabilisation complète': 'Complete stabilization',
+  'Stabilisation retrouvée': 'Stabilization regained',
+  'Stabilisation second essai': 'Stabilized on second attempt',
+  'Stabilité trajectoire': 'Flight path stability',
+  'Stable et correct': 'Stable and correct',
+  'Style global des examinateurs': 'Overall examiner style',
+  'Subi': 'Endured / reactive',
+  'Subie': 'Endured / reactive',
+  'Suggestions concrètes…': 'Concrete suggestions…',
+  'Suite de la phase précédente': 'Follow-up from previous phase',
+  'Suite à un déroutement / retour terrain': 'Following a diversion / return to field',
+  'Suite à une panne': 'Following a failure',
+  'Sujets revus pendant le briefing': 'Topics reviewed during the briefing',
+  'Surcharge ATC': 'ATC overload',
+  'Surprises, écarts…': 'Surprises, deviations…',
+  'TCAS / conflit trafic': 'TCAS / traffic conflict',
+  'TIMELINE DE SÉANCE': 'SESSION TIMELINE',
+  'TON ADRESSE EMAIL (POUR RECEVOIR LE RÉCAP)': 'YOUR EMAIL ADDRESS (TO RECEIVE THE SUMMARY)',
+  'Tardive': 'Late',
+  'Taxiway complexe': 'Complex taxiway',
+  'Temps limité': 'Limited time',
+  'Temps limité / pression': 'Limited time / pressure',
+  'Tentatives de déconcentration aux moments clés': 'Attempts to distract at key moments',
+  'Terrain': 'Airfield',
+  'Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.': 'Your answers will be saved in the coaching database and a summary will be sent to you by email.',
+  'Ton adresse email (pour recevoir le récap)': 'Your email address (to receive the summary)',
+  'Toujours en avance': 'Always ahead',
+  'Toujours en difficulté': 'Always struggling',
+  'Toujours en surcharge': 'Always overloaded',
+  'Trafic': 'Traffic',
+  'Train / freins': 'Gear / brakes',
+  'Train sorti': 'Gear down',
+  'Traitement panne/ECAM terminé avant approche ?': 'Was the failure/ECAM fully handled before the approach?',
+  'Trajectoire': 'Flight path',
+  'Trajectoire GA publiée': 'Published go-around flight path',
+  'Trajectoire visuelle': 'Visual flight path',
+  'Transition IMC/VMC': 'IMC/VMC transition',
+  'Très anticipable': 'Very easy to anticipate',
+  'Très anticipée': 'Very well anticipated',
+  'Très bienveillants': 'Very supportive',
+  'Très déstabilisant': 'Very destabilizing',
+  'Très facile': 'Very easy',
+  'Très faible': 'Very low',
+  'Très marqué': 'Very marked',
+  'Très propre': 'Very clean',
+  'Très silencieux': 'Very quiet',
+  'Très tardive': 'Very late',
+  'Type d\'évaluation': 'Type of assessment',
+  'Type de départ': 'Departure type',
+  'Type de panne moteur': 'Type of engine failure',
+  'Type de phase': 'Type of phase',
+  'Type de posé': 'Type of landing',
+  'Type de repositionnement': 'Type of repositioning',
+  'Type sélectionné…': 'Selected type…',
+  'Variables selon phases': 'Variable depending on the phase',
+  'Vecteurs radar': 'Radar vectors',
+  'Vent': 'Wind',
+  'Vent / cisaillement': 'Wind / shear',
+  'Vent fort': 'Strong wind',
+  'Via la STAR': 'Via the STAR',
+  'Vigilance trafic': 'Traffic awareness',
+  'Virages': 'Turns',
+  'Visuel': 'Visual',
+  'Visuel extérieur': 'External visual cues',
+  'Visuelle': 'Visual',
+  'Vérification croisée': 'Cross-check',
+  'Vérifications cockpit': 'Cockpit checks',
+  'Wet / contaminée': 'Wet / contaminated',
+  'Windshear / alarme météo': 'Windshear / weather alert',
+  'Windshear / météo sévère': 'Windshear / severe weather',
+  'ex : 1 200 h': 'e.g. 1,200 h',
+  'ex : 400 h': 'e.g. 400 h',
+  'ex : 800 h': 'e.g. 800 h',
+  'préciser…': 'specify…',
+  'ton@email.com': 'your@email.com',
+  'À cause du PM': 'Due to the PM',
+  'À la capture': 'At capture',
+  'À quel moment le raw data a-t-il été imposé ?': 'At what point was raw data imposed?',
+  'Écart LOC / glide': 'LOC / glide deviation',
+  'Électrique': 'Electrical',
+  'Élevé': 'High',
+  'Élevée': 'High',
+  'Événement multiple': 'Multiple event',
+  '⚡ Gestion énergie': '⚡ Energy management',
+  '📋 Discipline SOP': '📋 SOP discipline',
+  '🔧 Gestion panne': '🔧 Failure management',
+  '🧠 Gestion charge mentale': '🧠 Mental workload management'
+  }
+}
+function toggleLang() {
+  currentLang = currentLang === 'fr' ? 'en' : 'fr';
+  if (typeof applyTranslations === 'function') {
+    applyTranslations();
+  } else {
+    console.error('applyTranslations non définie');
+  }
+}
+
+function applyTranslations() {
+  var dict = currentLang === 'en' ? TRANSLATIONS.en : null;
+  var isEN = currentLang === 'en';
+
+  // 1. Éléments avec data-fr/data-en explicites (priorité absolue)
+  document.querySelectorAll('[data-fr][data-en]').forEach(function(el) {
+    el.textContent = isEN ? el.dataset.en : el.dataset.fr;
+  });
+
+  // 2. Options avec data-fr/data-en
+  document.querySelectorAll('option[data-fr][data-en]').forEach(function(el) {
+    el.textContent = isEN ? el.dataset.en : el.dataset.fr;
+  });
+
+  // Traduit un noeud texte direct
+  function trNode(node) {
+    var t = node.textContent.trim();
+    if (t.length < 2) return;
+    if (!node._fr) node._fr = t;
+    var tr = dict ? (dict[node._fr] || node._fr) : node._fr;
+    node.textContent = node.textContent.replace(t, tr);
+  }
+
+  // Traduit les noeuds texte directs d'un élément
+  function trNodes(el) {
+    el.childNodes.forEach(function(n) { if (n.nodeType === 3) trNode(n); });
+  }
+
+  // Traduit un élément sans enfants HTML
+  function trEl(el) {
+    var t = el.textContent.trim();
+    if (t.length < 2) return;
+    if (!el._fr) el._fr = t;
+    el.textContent = dict ? (dict[el._fr] || el._fr) : el._fr;
+  }
+
+  // Options : seulement si la clé existe dans dict
+  function trOpt(el) {
+    if (el.dataset.fr) return; // déjà géré
+    var t = el.textContent.trim();
+    if (!t || t.length < 2) return;
+    if (!el._fr) el._fr = t;
+    var tr = dict ? dict[el._fr] : null;
+    if (tr) el.textContent = tr;
+    else if (!dict && el._fr) el.textContent = el._fr;
+  }
+
+  // Placeholder
+  function trPh(el) {
+    var frph = el.getAttribute('data-fr-ph');
+    var enph = el.getAttribute('data-en-ph');
+    if (frph && enph) {
+      el.placeholder = isEN ? enph : frph;
+      return;
+    }
+    if (!el._frph) el._frph = el.placeholder;
+    el.placeholder = dict ? (dict[el._frph] || el._frph) : el._frph;
+  }
+
+  // 3. Éléments statiques de structure
+  document.querySelectorAll('h1,h2,h3').forEach(trEl);
+  document.querySelectorAll('p').forEach(trEl);
+  document.querySelectorAll('label:not(.cb-item)').forEach(trNodes);
+  document.querySelectorAll('.cb-item').forEach(trNodes);
+  document.querySelectorAll('.subsection-title').forEach(trEl);
+  document.querySelectorAll('.section-head').forEach(trNodes);
+
+  // 4. Labels des questions dynamiques (q-label, q-hint, star-label)
+  document.querySelectorAll('.q-label,.q-hint,.star-label').forEach(trEl);
+
+  // Chips dynamiques (phases timeline) - sauf PF/PM
+  document.querySelectorAll('.chip').forEach(function(el) {
+    if (el.id && (el.id.endsWith('_pf') || el.id.endsWith('_pm'))) return;
+    if (el.dataset.fr || el.dataset.en) return; // déjà géré
+    var t = el.textContent.trim();
+    if (t.length < 1) return;
+    if (!el._fr) el._fr = t;
+    el.textContent = dict ? (dict[el._fr] || el._fr) : el._fr;
+  });
+
+  // 5. Result badges
+  document.querySelectorAll('.result-badge').forEach(trNodes);
+
+  // 6. Boutons
+  document.querySelectorAll('button:not(#lang-btn):not(.brick-remove)').forEach(function(el) {
+    if (el.dataset.fr && el.dataset.en) {
+      el.textContent = isEN ? el.dataset.en : el.dataset.fr;
+    } else {
+      trNodes(el);
+    }
+  });
+
+  // 7. Options de selects (sauf compagnies)
+  document.querySelectorAll('select:not(#f-compagnie):not(#f-compagnie-eval) option').forEach(trOpt);
+
+  // 8. Selects de phases : reconstruire avec labels traduits (PHASES est global)
+  document.querySelectorAll('[id$="_phase_select"]').forEach(function(sel) {
+    var currentVal = sel.value;
+    sel.innerHTML = PHASES.map(function(p) {
+      var label = (currentLang === 'en' && TRANSLATIONS.en[p]) ? TRANSLATIONS.en[p] : p;
+      return '<option value="' + p.replace(/"/g,'&quot;') + '">' + label + '</option>';
+    }).join('');
+    sel.value = currentVal;
+  });
+
+  // 9. Misc labels (gravity, arrows)
+  document.querySelectorAll('.gravity-bar-label,.global-gravity-label,.brick-arrow,.add-brick-btn,.brick-phase-badge,.brick-issue-badge').forEach(trEl);
+
+  // 10. Placeholders
+  document.querySelectorAll('[placeholder]').forEach(trPh);
+
+  // 11. Title page
+  var pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.textContent = isEN ? 'Simulator Assessment Feedback' : 'RETEX Évaluation Simulateur';
+
+  // 12. modal-url (si non modifié par copyUrl)
+  var modalUrl = document.getElementById('modal-url');
+  if (modalUrl) {
+    var cur = modalUrl.textContent.trim();
+    var frDef = modalUrl.dataset.frDefault;
+    var enDef = modalUrl.dataset.enDefault;
+    if (cur === frDef || cur === enDef || cur === '✅ Lien copié !' || cur === '✅ Link copied!') {
+      modalUrl.textContent = isEN ? enDef : frDef;
+    }
+  }
+
+  // 13. Options spéciales de f-compagnie (— sélectionner — et Pas encore embauché)
+  var fComp = document.getElementById('f-compagnie');
+  if (fComp) {
+    fComp.querySelectorAll('option[data-fr][data-en]').forEach(function(opt) {
+      opt.textContent = isEN ? opt.dataset.en : opt.dataset.fr;
+    });
+  }
+
+  // 14. Bouton langue
+  var btn = document.getElementById('lang-btn');
+  if (btn) btn.innerHTML = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
+}
+
+var qrGenerated = false;
+function openQR() {
+  var modal = document.getElementById('qr-modal');
+  var url = CONFIG.FORM_URL || window.location.href;
+  document.getElementById('modal-url').textContent = url;
+  if (!qrGenerated && window.QRCode) {
+    new QRCode(document.getElementById('qr-container'), {text:url, width:200, height:200, colorDark:'#0D1B3E', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.H});
+    qrGenerated = true;
+  }
+  modal.classList.add('open');
+}
+function closeQR(e) {
+  if (!e || e.target === document.getElementById('qr-modal')) document.getElementById('qr-modal').classList.remove('open');
+}
+function copyUrl() {
+  var url = CONFIG.FORM_URL || window.location.href;
+  navigator.clipboard.writeText(url).then(function() {
+    var el = document.getElementById('modal-url');
+    el.textContent = currentLang === 'en' ? '✅ Link copied!' : '✅ Lien copié !';
+    setTimeout(function() { el.textContent = url; }, 2000);
+  });
+}
+
+
+// ════════════════════════════════════════════════
+// MACHINE ACTUELLE — sélecteur famille + types
+// ════════════════════════════════════════════════
+var FLEET = {
+  'airbus-narrow': ['A318','A319','A320','A320neo','A321','A321neo','A321XLR','A220-100','A220-300'],
+  'airbus-wide':   ['A330-200','A330-300','A330-900neo','A340-300','A340-600','A350-900','A350-1000','A380'],
+  'boeing-narrow': ['B737-700','B737-800','B737-900','B737 MAX 8','B737 MAX 9','B737 MAX 10'],
+  'boeing-wide':   ['B767-300','B777-200','B777-300','B777-300ER','B777X','B787-8','B787-9','B787-10'],
+  'atr':           ['ATR 42-500','ATR 42-600','ATR 72-500','ATR 72-600'],
+  'embraer':       ['E170','E175','E190','E190-E2','E195','E195-E2','ERJ-145'],
+  'autre':         []
+};
+
+function selectFamille(el) {
+  // Toggle famille
+  var famille = el.dataset.famille;
+  var famChips = document.getElementById('famille-chips');
+  famChips.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+
+  var typesDiv = document.getElementById('machine-types');
+  var autreInput = document.getElementById('f-machine-autre');
+  var machineInput = document.getElementById('f-machine');
+
+  if (famille === 'autre') {
+    typesDiv.style.display = 'none';
+    typesDiv.innerHTML = '';
+    autreInput.style.display = 'block';
+    autreInput.oninput = function() { machineInput.value = this.value; };
+    machineInput.value = '';
     return;
   }
 
-  document.getElementById('form-wrap').style.display='none';
-  document.getElementById('submit-success').style.display='flex';
+  autreInput.style.display = 'none';
+  var types = FLEET[famille] || [];
+  typesDiv.innerHTML = types.map(function(t) {
+    return '<span class="chip" data-type="' + t + '" onclick="selectType(this)">' + t + '</span>';
+  }).join('');
+  typesDiv.style.display = 'flex';
+  machineInput.value = '';
 }
+
+function selectType(el) {
+  var parent = el.closest('#machine-types');
+  parent.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  document.getElementById('f-machine').value = el.dataset.type;
+}
+
+function selectPassages(el) {
+  el.closest('div').querySelectorAll('.chip').forEach(function(c) { c.classList.remove('on'); });
+  el.classList.add('on');
+  document.getElementById('f-passages').value = el.dataset.val;
+}
+
+emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
 </script>
 </body>
 </html>
