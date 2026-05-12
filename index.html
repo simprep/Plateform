@@ -541,18 +541,14 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
       <div style="width:200px;height:2px;background:#E8001D;margin:0 auto 8px"></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase">Plateforme Instructeur</div>
     </div>
-    <!-- Form -->
+    <!-- Form PIN -->
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px">
-      <div style="margin-bottom:14px">
-        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Identifiant</label>
-        <input id="login-user" type="text" autocomplete="username" placeholder="instructeur" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;font-size:14px;color:#fff;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      <div style="margin-bottom:20px;text-align:center">
+        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Code d'accès</label>
+        <input id="login-pin" type="password" inputmode="numeric" maxlength="8" placeholder="••••••" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:14px 12px;font-size:24px;color:#fff;font-family:monospace;outline:none;text-align:center;letter-spacing:.3em" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
       </div>
-      <div style="margin-bottom:20px">
-        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Mot de passe</label>
-        <input id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 12px;font-size:14px;color:#fff;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button onclick="doLogin()" style="width:100%;background:#E8001D;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.02em">Connexion</button>
-      <div id="login-error" style="display:none;margin-top:10px;text-align:center;font-size:11px;color:#F87171">Identifiant ou mot de passe incorrect</div>
+      <button onclick="doLogin()" style="width:100%;background:#E8001D;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.02em">Accéder</button>
+      <div id="login-error" style="display:none;margin-top:10px;text-align:center;font-size:11px;color:#F87171">Code incorrect</div>
     </div>
     <div style="text-align:center;margin-top:16px;font-size:10px;color:rgba(255,255,255,0.2)">SIMPREP · Usage instructeur uniquement</div>
   </div>
@@ -596,7 +592,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <button class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);font-size:11px" onclick="exportData()" title="Exporter toutes les données">⬇ Export</button>
     <label class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);font-size:11px;cursor:pointer" title="Importer des données">⬆ Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
     <button class="btn btn-sm" onclick="logout()" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);font-size:11px" title="Déconnexion">⎋</button>
-    <button class="btn btn-sm" id="sb-nav-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.15);font-size:11px" onclick="openModal('modal-supabase')" title="Configurer Supabase">☁</button>
+    <div id="sb-nav-btn" style="font-size:11px;color:rgba(255,255,255,0.3)">☁ Supabase</div>
   </div>
 </nav>
 
@@ -1013,17 +1009,11 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
       <div id="sb-status" style="display:none;padding:10px;border-radius:6px;font-size:11px;margin-top:10px"></div>
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:10px">Changer les identifiants de connexion</div>
-      <div class="grid2">
-        <div class="form-group">
-          <label class="form-label">Nouvel identifiant</label>
-          <input class="form-input" id="new-login-user" placeholder="simprep" type="text">
+      <div class="form-group">
+          <label class="form-label">Nouveau code d'accès</label>
+          <input class="form-input" id="new-login-pass" placeholder="ex. simprep2026" type="text">
         </div>
-        <div class="form-group">
-          <label class="form-label">Nouveau mot de passe</label>
-          <input class="form-input" id="new-login-pass" placeholder="••••••••" type="password">
-        </div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="changeCredentials()">Mettre à jour les identifiants</button>
+      <button class="btn btn-secondary btn-sm" onclick="changeCredentials()">Mettre à jour le code</button>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-supabase')">Annuler</button>
@@ -3609,22 +3599,16 @@ function importData(e){
 // ════════════════════════════════════════════════════
 // SUPABASE
 // ════════════════════════════════════════════════════
-const SB_CONFIG_KEY='simprep_supabase_config';
+// ════ SUPABASE CONFIG (hardcodée) ════
+const SB_URL = "https://erzinefnmcyxhtmkimmt.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyemluZWZubWN5eGh0bWtpbW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1ODYxNjQsImV4cCI6MjA5NDE2MjE2NH0.nLW6Cy3vWjfSSOXlrrMalwfyXg7zbLTM5sRR8D3HUCU";
+const SB_INSTRUCTOR = "simprep-victor";
 
 function getSupabaseConfig(){
-  try{return JSON.parse(localStorage.getItem(SB_CONFIG_KEY)||'null');}catch(e){return null;}
+  return {url: SB_URL, key: SB_KEY, instructorId: SB_INSTRUCTOR};
 }
 
-function openSupabaseModal(){
-  const cfg=getSupabaseConfig();
-  if(cfg){
-    document.getElementById('sb-url').value=cfg.url||'';
-    document.getElementById('sb-key').value=cfg.key||'';
-    document.getElementById('sb-instructor-id').value=cfg.instructorId||'';
-  }
-  document.getElementById('sb-status').style.display='none';
-  openModal('modal-supabase');
-}
+function openSupabaseModal(){ openModal("modal-supabase"); }
 
 function saveSupabaseConfig(){
   const url=document.getElementById('sb-url').value.trim().replace(/\/$/,'');
@@ -3707,28 +3691,23 @@ function setSyncStatus(state){
 }
 
 function updateSyncIndicator(){
-  const cfg=getSupabaseConfig();
-  if(!cfg){setSyncStatus('local');return;}
   const last=localStorage.getItem('simprep_last_sync');
-  setSyncStatus(last?'ok':'local');
+  setSyncStatus(last?'ok':'syncing');
 }
 
 // Auto-sync 2s after each save
 const _origSaveDB=saveDB;
 saveDB=function(db){
   _origSaveDB(db);
-  if(getSupabaseConfig()){
-    clearTimeout(window._syncTimeout);
-    window._syncTimeout=setTimeout(syncToSupabase,2000);
-  }
+  clearTimeout(window._syncTimeout);
+  window._syncTimeout=setTimeout(syncToSupabase,2000);
 };
 
 function changeCredentials(){
-  const user = document.getElementById('new-login-user').value.trim();
-  const pass = document.getElementById('new-login-pass').value;
-  if(!user||!pass){alert('Identifiant et mot de passe requis');return;}
-  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({user,pass}));
-  alert('Identifiants mis à jour ✅\nReconnexion lors de la prochaine ouverture.');
+  const pin = document.getElementById('new-login-pass').value.trim();
+  if(!pin){alert('Code requis');return;}
+  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({pin}));
+  alert('Code mis à jour ✅');
 }
 
 // Override cloud button
@@ -3760,27 +3739,21 @@ function isAuthenticated(){
 }
 
 function doLogin(){
-  const user = document.getElementById('login-user').value.trim();
-  const pass = document.getElementById('login-pass').value;
+  const pin = document.getElementById('login-pin').value.trim();
   const creds = getCredentials();
+  const validPin = creds ? creds.pin : 'simprep2026';
   const errEl = document.getElementById('login-error');
-
-  // Default credentials if none set
-  const validUser = creds ? creds.user : 'simprep';
-  const validPass = creds ? creds.pass : 'simprep2026';
-
-  if(user === validUser && pass === validPass){
-    // Session valid 30 days
+  if(pin === validPin){
     const expires = new Date();
     expires.setDate(expires.getDate() + 30);
     localStorage.setItem(AUTH_KEY, JSON.stringify({expires: expires.toISOString()}));
-    document.getElementById('login-screen').style.display = 'none';
-    errEl.style.display = 'none';
+    document.getElementById('login-screen').style.display='none';
+    errEl.style.display='none';
     startApp();
   } else {
-    errEl.style.display = 'block';
-    document.getElementById('login-pass').value = '';
-    document.getElementById('login-pass').focus();
+    errEl.style.display='block';
+    document.getElementById('login-pin').value='';
+    document.getElementById('login-pin').focus();
   }
 }
 
@@ -3798,18 +3771,9 @@ function setLoadingMsg(msg, pct){
 
 async function startApp(){
   const loadingEl = document.getElementById('loading-screen');
-  setLoadingMsg('Initialisation…', 20);
-
-  const cfg = getSupabaseConfig();
-
-  if(cfg){
-    setLoadingMsg('Connexion Supabase…', 40);
-    await syncFromSupabase();
-    setLoadingMsg('Données chargées', 90);
-  } else {
-    setLoadingMsg('Chargement local…', 80);
-    await new Promise(r => setTimeout(r, 300));
-  }
+  setLoadingMsg('Connexion Supabase…', 30);
+  await syncFromSupabase();
+  setLoadingMsg('Données chargées', 90);
 
   setLoadingMsg('Prêt', 100);
   await new Promise(r => setTimeout(r, 200));
@@ -3829,15 +3793,12 @@ async function startApp(){
 (function boot(){
   const loadingEl = document.getElementById('loading-screen');
   const loginEl = document.getElementById('login-screen');
-
   if(isAuthenticated()){
-    // Already logged in — start app
-    if(loginEl) loginEl.style.display = 'none';
-    startApp();
+    if(loginEl) loginEl.style.display='none';
+    startApp(); // Supabase always configured
   } else {
-    // Show login
-    if(loadingEl) loadingEl.style.display = 'none';
-    if(loginEl) loginEl.style.display = 'flex';
+    if(loadingEl) loadingEl.style.display='none';
+    if(loginEl) loginEl.style.display='flex';
   }
 })();
 
