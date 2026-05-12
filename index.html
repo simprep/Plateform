@@ -660,6 +660,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
           <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2)" onclick="editCandidatModal()">✏ Modifier</button>
           <button class="btn btn-sm" style="background:rgba(220,38,38,0.2);color:#fca5a5;border:1px solid rgba(220,38,38,0.3)" onclick="deleteCandidatConfirm()">🗑 Supprimer</button>
           <button class="btn btn-primary btn-sm" onclick="openNewSeanceModal()">+ Séance</button>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2)" onclick="sendRetexRequest()">📝 Demander retex</button>
         </div>
       </div>
     </div>
@@ -670,6 +671,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <button class="inner-tab active" onclick="showInnerTab('progression',this)">📈 Progression</button>
     <button class="inner-tab" onclick="showInnerTab('seances',this)">📋 Séances</button>
     <button class="inner-tab" onclick="showInnerTab('retex',this)">📝 Retex épreuve</button>
+    <button class="inner-tab" onclick="showInnerTab('retexlist',this)">📬 Retex reçus</button>
     <button class="inner-tab" onclick="showInnerTab('presession',this)">🎯 Pré-séance</button>
   </div>
 
@@ -717,6 +719,15 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <div id="retex-form-wrap">
       <!-- Retex form injected here -->
     </div>
+  </div>
+
+  <!-- RETEX REÇUS TAB -->
+  <div class="inner-panel" id="panel-retexlist">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-size:12px;color:var(--text2)" id="retexlist-count">Chargement…</span>
+      <button class="btn btn-secondary btn-sm" onclick="exportRetexCSV()">⬇ Exporter CSV</button>
+    </div>
+    <div id="retexlist-container"></div>
   </div>
 
   <!-- PRÉ-SÉANCE TAB -->
@@ -1256,6 +1267,7 @@ function showInnerTab(id, btn){
   if(id==='progression') renderProgression();
   if(id==='seances') renderSeances();
   if(id==='retex') renderRetexPanel();
+  if(id==='retexlist') renderRetexList();
   if(id==='presession') renderPresession();
 }
 
@@ -3728,6 +3740,149 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════
+// RETEX REQUEST — send link to candidate
+// ════════════════════════════════════════════════════
+async function sendRetexRequest(){
+  const db = loadDB();
+  const c = db.candidats.find(x=>x.id===currentCandidatId);
+  if(!c) return;
+
+  if(!c.email){ alert("Ajoute l'email du candidat dans sa fiche avant d'envoyer la demande."); return; }
+
+  const token = uuid() + uuid(); // long unique token
+  const retexUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'retex.html?token=' + token;
+
+  // Save token in Supabase retex table
+  const { error } = await sbClient.from('retex').insert({
+    user_id: currentUser.id,
+    candidat_id: c.id,
+    candidat_nom: c.nom,
+    token: token,
+    statut: 'en_attente'
+  });
+
+  if(error){ alert('Erreur Supabase : ' + error.message); return; }
+
+  // Open mail client
+  const subject = encodeURIComponent('Retex épreuve simulateur — SIMPREP');
+  const body = encodeURIComponent(
+    'Bonjour ' + c.nom.split(' ')[0] + ',\n\n' +
+    "Je t'invite à remplir ton formulaire de retex post-épreuve.\\n\\n" +
+    '→ ' + retexUrl + '\n\n' +
+    'Ce lien est personnel et unique. Merci pour ton retex !\n\n' +
+    "Cordialement"
+  );
+  window.location.href = 'mailto:' + c.email + '?subject=' + subject + '&body=' + body;
+
+  alert("✅ Lien retex créé pour " + c.nom + ". Email pré-rempli ouvert.\nTu pourras voir le retex dans l'onglet Retex reçus une fois rempli.");
+}
+
+// ════════════════════════════════════════════════════
+// RENDER RETEX LIST
+// ════════════════════════════════════════════════════
+async function renderRetexList(){
+  if(!currentUser) return;
+  const container = document.getElementById('retexlist-container');
+  const countEl = document.getElementById('retexlist-count');
+  container.innerHTML = '<p style="font-size:11px;color:var(--text3)">Chargement…</p>';
+
+  const { data, error } = await sbClient
+    .from('retex')
+    .select('id,candidat_nom,statut,submitted_at,created_at,reponses,token')
+    .eq('user_id', currentUser.id)
+    .eq('candidat_id', currentCandidatId)
+    .order('created_at', {ascending: false});
+
+  if(error){ container.innerHTML = '<p style="color:var(--c1)">Erreur : ' + error.message + '</p>'; return; }
+
+  countEl.textContent = data.length + ' demande(s)';
+
+  if(!data.length){
+    container.innerHTML = '<div class="empty-state" style="padding:30px"><div class="icon">📬</div><h3>Aucun retex</h3><p>Envoie une demande de retex au candidat via le bouton "Demander retex"</p></div>';
+    return;
+  }
+
+  const statusColors = { en_attente: 'badge-gold', recu: 'badge-green', lu: 'badge-blue' };
+  const statusLabels = { en_attente: '⏳ En attente', recu: '✅ Reçu', lu: '👁 Lu' };
+
+  container.innerHTML = data.map(r => {
+    const d = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const sd = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
+    const rep = r.reponses;
+
+    return `<div style="border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;background:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div>
+          <span class="badge ${statusColors[r.statut]||'badge-grey'}">${statusLabels[r.statut]||r.statut}</span>
+          <span style="font-size:10px;color:var(--text3);margin-left:8px">Envoyé le ${d}${sd?' · Reçu le '+sd:''}</span>
+        </div>
+        ${r.statut==='recu' ? `<button class="btn btn-sm btn-secondary" onclick="markRetexLu('${r.id}')">Marquer lu</button>` : ''}
+      </div>
+      ${rep ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div style="background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px">
+          <div style="font-weight:700;color:var(--navy)">${rep.compagnie_eval||'—'}</div>
+          <div style="color:var(--text2)">Compagnie évaluée</div>
+        </div>
+        <div style="background:${rep.resultat==='WIN'?'#ECFDF5':rep.resultat==='FAIL'?'#FEF2F2':'var(--bg2)'};border-radius:6px;padding:8px 10px;font-size:11px">
+          <div style="font-weight:700;color:${rep.resultat==='WIN'?'#059669':rep.resultat==='FAIL'?'#DC2626':'var(--navy)'}">${rep.resultat||'—'}</div>
+          <div style="color:var(--text2)">Résultat</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px">
+          <div style="font-weight:700;color:var(--navy)">${rep.machine_eval||'—'}</div>
+          <div style="color:var(--text2)">Machine éval.</div>
+        </div>
+      </div>
+      ${rep.retex_libre ? `<div style="margin-top:8px;background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text2);font-style:italic;max-height:80px;overflow:hidden">"${rep.retex_libre.substring(0,200)}${rep.retex_libre.length>200?'…':''}"</div>` : ''}
+      ` : '<p style="font-size:11px;color:var(--text3);font-style:italic">En attente de réponse du candidat</p>'}
+    </div>`;
+  }).join('');
+}
+
+async function markRetexLu(retexId){
+  await sbClient.from('retex').update({statut:'lu'}).eq('id',retexId);
+  renderRetexList();
+}
+
+// ════════════════════════════════════════════════════
+// EXPORT RETEX CSV
+// ════════════════════════════════════════════════════
+async function exportRetexCSV(){
+  if(!currentUser) return;
+  const { data, error } = await sbClient
+    .from('retex')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .eq('statut', 'recu');
+
+  if(error||!data.length){ alert('Aucun retex reçu à exporter'); return; }
+
+  const headers = ['Candidat','Date envoi','Date retex','Compagnie eval','Résultat','Machine','Retex libre','Erreur principale','Coaching utile'];
+  const rows = data.map(r => {
+    const rep = r.reponses || {};
+    return [
+      r.candidat_nom||'',
+      r.created_at?new Date(r.created_at).toLocaleDateString('fr-FR'):'',
+      r.submitted_at?new Date(r.submitted_at).toLocaleDateString('fr-FR'):'',
+      rep.compagnie_eval||'',
+      rep.resultat||'',
+      rep.machine_eval||'',
+      (rep.retex_libre||'').replace(/\n/g,' ').replace(/"/g,"'"),
+      (rep.erreur_principale||'').replace(/\n/g,' ').replace(/"/g,"'"),
+      (rep.coaching_utile||'').replace(/\n/g,' ').replace(/"/g,"'")
+    ].map(v => '"'+v+'"').join(',');
+  });
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'retex_simprep_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
 // ════════════════════════════════════════════════════
 // AUTH — Login/password
 // ════════════════════════════════════════════════════
