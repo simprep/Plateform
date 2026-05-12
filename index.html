@@ -6,6 +6,7 @@
 <title>SIMPREP — Plateforme Instructeur</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -3744,17 +3745,22 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ════════════════════════════════════════════════════
 // RETEX REQUEST — send link to candidate
 // ════════════════════════════════════════════════════
+// EmailJS config
+const EMAILJS_PUBLIC_KEY = "5ZOYkeHEtkwNj_OyU";
+const EMAILJS_SERVICE_ID = "service_np9pjk4";
+const EMAILJS_TEMPLATE_ID = "template_btpiy14";
+
 async function sendRetexRequest(){
   const db = loadDB();
   const c = db.candidats.find(x=>x.id===currentCandidatId);
   if(!c) return;
 
-  if(!c.email){ alert("Ajoute l'email du candidat dans sa fiche avant d'envoyer la demande."); return; }
+  if(!c.email){ alert("Ajoute l\'email du candidat dans sa fiche avant d\'envoyer la demande."); return; }
 
-  const token = uuid() + uuid(); // long unique token
-  const retexUrl = window.location.origin + window.location.pathname.replace('index.html','') + 'retex.html?token=' + token;
+  const token = uuid() + uuid();
+  const base = window.location.href.split('?')[0].replace(/index\.html$/, '');
+  const retexUrl = base + 'retex.html?token=' + token;
 
-  // Save token in Supabase retex table
   const { error } = await sbClient.from('retex').insert({
     user_id: currentUser.id,
     candidat_id: c.id,
@@ -3765,18 +3771,27 @@ async function sendRetexRequest(){
 
   if(error){ alert('Erreur Supabase : ' + error.message); return; }
 
-  // Open mail client
-  const subject = encodeURIComponent('Retex épreuve simulateur — SIMPREP');
-  const body = encodeURIComponent(
-    'Bonjour ' + c.nom.split(' ')[0] + ',\n\n' +
-    "Je t'invite à remplir ton formulaire de retex post-épreuve.\\n\\n" +
-    '→ ' + retexUrl + '\n\n' +
-    'Ce lien est personnel et unique. Merci pour ton retex !\n\n' +
-    "Cordialement"
-  );
-  window.location.href = 'mailto:' + c.email + '?subject=' + subject + '&body=' + body;
+  const prenom = c.nom.split(' ').slice(-1)[0];
 
-  alert("✅ Lien retex créé pour " + c.nom + ". Email pré-rempli ouvert.\nTu pourras voir le retex dans l'onglet Retex reçus une fois rempli.");
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  try{
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: c.email,
+      candidat_prenom: prenom,
+      candidat_nom: c.nom,
+      retex_url: retexUrl,
+      instructeur_nom: currentUser?.email?.split('@')[0] || 'Votre instructeur',
+      name: c.nom,
+      email: c.email
+    });
+    alert("\u2705 Email envoyé à " + c.email + "\nRetex reçus visible dans l\'onglet dédié.");
+  } catch(err){
+    console.error('EmailJS error:', err);
+    const subject = encodeURIComponent('Retex épreuve simulateur \u2014 SIMPREP');
+    const body = encodeURIComponent('Bonjour ' + prenom + ',\n\nJe t\'invite à remplir ton formulaire de retex.\n\n\u2192 ' + retexUrl + '\n\nMerci !');
+    window.open('mailto:' + c.email + '?subject=' + subject + '&body=' + body);
+    alert("EmailJS indisponible \u2014 email ouvert dans Mail.");
+  }
 }
 
 // ════════════════════════════════════════════════════
