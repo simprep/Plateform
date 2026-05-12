@@ -602,6 +602,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <label class="btn btn-sm" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);font-size:11px;cursor:pointer" title="Importer des données">⬆ Import<input type="file" accept=".json" onchange="importData(event)" style="display:none"></label>
     <button class="btn btn-sm" onclick="logout()" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);font-size:11px" title="Déconnexion">⎋</button>
     <div id="sb-nav-btn" style="font-size:11px;color:rgba(255,255,255,0.3)">☁ Supabase</div>
+    <button class="btn btn-sm" id="btn-refresh" onclick="manualRefresh()" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.15);font-size:13px;min-width:32px;padding:0 8px" title="Rafraîchir depuis Supabase">↻</button>
   </div>
 </nav>
 
@@ -627,13 +628,39 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <div class="stat-card"><div class="stat-num" style="color:var(--c1)" id="stat-ajourn">0</div><div class="stat-label">Ajournés</div></div>
   </div>
 
-  <!-- Candidates grid -->
+  <!-- Dashboard toolbar -->
+  <div id="dash-toolbar" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <input id="dash-search" type="text" placeholder="🔍 Nom, background…" oninput="renderDashboard()" style="flex:1;min-width:160px;border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff">
+    <select id="dash-filter" onchange="renderDashboard()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+      <option value="">Tous statuts</option>
+      <option value="en_cours">En cours</option>
+      <option value="pret">Prêt</option>
+    </select>
+    <select id="dash-sort" onchange="renderDashboard()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;font-size:12px;font-family:inherit;outline:none;background:#fff">
+      <option value="nom">A → Z</option>
+      <option value="nom-desc">Z → A</option>
+      <option value="date">Dernière séance</option>
+      <option value="seances">Nb séances</option>
+    </select>
+  </div>
+
+  <!-- Active candidates grid -->
   <div class="cand-grid" id="cand-grid">
     <div class="empty-state" style="grid-column:1/-1">
       <div class="icon">✈</div>
       <h3>Aucun candidat</h3>
       <p>Créez votre premier candidat pour commencer</p>
     </div>
+  </div>
+
+  <!-- Archived section (admis + ajournés) -->
+  <div id="dash-archived-section" style="display:none;margin-top:16px">
+    <div onclick="toggleArchivedSection()" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);user-select:none">
+      <span id="dash-archived-arrow" style="font-size:14px;transition:transform .2s">▶</span>
+      <span style="font-size:12px;font-weight:600;color:var(--text2)" id="dash-archived-label">Archivés (admis & ajournés)</span>
+      <span id="dash-archived-count" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
+    </div>
+    <div id="dash-archived-grid" class="cand-grid" style="display:none;margin-top:8px"></div>
   </div>
 
 </div>
@@ -1305,28 +1332,54 @@ function renderDashboard(){
   document.getElementById('stat-encours').textContent = candidats.filter(c=>c.statut==='en_cours'||c.statut==='pret').length;
   document.getElementById('stat-admis').textContent = candidats.filter(c=>c.statut==='admis').length;
   document.getElementById('stat-ajourn').textContent = candidats.filter(c=>c.statut==='ajourn').length;
-  document.getElementById('dashboard-subtitle').textContent = `${candidats.length} candidat(s) · ${candidats.reduce((s,c)=>s+(c.seances||[]).length,0)} séance(s) enregistrée(s)`;
+  document.getElementById('dashboard-subtitle').textContent = `${candidats.length} candidat(s) · ${candidats.reduce((s,c)=>s+(c.seances||[]).length,0)} séance(s)`;
 
   const grid = document.getElementById('cand-grid');
+  if(!grid) return;
+
   if(candidats.length === 0){
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">✈</div><h3>Aucun candidat</h3><p>Créez votre premier candidat pour commencer</p></div>`;
+    const as = document.getElementById('dash-archived-section');
+    if(as) as.style.display='none';
     return;
   }
 
-  grid.innerHTML = candidats.map(c => {
+  const searchVal = (document.getElementById('dash-search')?.value||'').toLowerCase();
+  const filterVal = document.getElementById('dash-filter')?.value||'';
+  const sortVal   = document.getElementById('dash-sort')?.value||'nom';
+  const ARCHIVED  = ['admis','ajourn'];
+  const today     = new Date(); today.setHours(0,0,0,0);
+
+  const sortFn = (a,b) => {
+    if(sortVal==='nom')      return a.nom.localeCompare(b.nom,'fr');
+    if(sortVal==='nom-desc') return b.nom.localeCompare(a.nom,'fr');
+    if(sortVal==='date'){
+      const da=(a.seances||[]).slice(-1)[0]?.date||'';
+      const db2=(b.seances||[]).slice(-1)[0]?.date||'';
+      return db2.localeCompare(da);
+    }
+    if(sortVal==='seances') return (b.seances||[]).length-(a.seances||[]).length;
+    return 0;
+  };
+
+  const matchSearch = c => !searchVal ||
+    c.nom.toLowerCase().includes(searchVal) ||
+    (c.background||'').toLowerCase().includes(searchVal);
+
+  let active   = candidats.filter(c=>!ARCHIVED.includes(c.statut) && matchSearch(c));
+  const archived = candidats.filter(c=>ARCHIVED.includes(c.statut) && matchSearch(c)).sort(sortFn);
+  if(filterVal) active = active.filter(c=>c.statut===filterVal);
+  active.sort(sortFn);
+
+  function buildCard(c){
     const seances = c.seances||[];
     const lastSeance = seances[seances.length-1];
     const initials = c.nom.split(' ').map(w=>w[0]).join('').substr(0,2).toUpperCase();
     const statutLabels = {en_cours:'En cours',pret:'Prêt',admis:'Admis ✅',ajourn:'Ajourné',a_revoir:'À revoir'};
-    const statutBadge = {en_cours:'badge-blue',pret:'badge-green',admis:'badge-green',ajourn:'badge-red',a_revoir:'badge-gold'};
+    const statutBadge  = {en_cours:'badge-blue',pret:'badge-green',admis:'badge-green',ajourn:'badge-red',a_revoir:'badge-gold'};
     const lastDate = lastSeance ? new Date(lastSeance.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '—';
-    // Next planned session
-    const db2 = loadDB();
-    const today = new Date(); today.setHours(0,0,0,0);
-    const nextPlan = (db2.plannedSeances||[]).filter(p=>p.candidatId===c.id && new Date(p.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
+    const nextPlan = (db.plannedSeances||[]).filter(p=>p.candidatId===c.id && new Date(p.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date))[0];
     const profilInfo = c.profilId ? getAllProfils().find(x=>x.id===c.profilId) : null;
-
-    // Get last session avg score
     let scoreHtml = '';
     if(lastSeance && lastSeance.competences){
       const vals = Object.values(lastSeance.competences).filter(v=>v>0);
@@ -1335,28 +1388,49 @@ function renderDashboard(){
         scoreHtml = `<div class="cand-stat"><div class="cand-stat-num">${avg}</div><div class="cand-stat-label">Moy. comp.</div></div>`;
       }
     }
-
     return `<div class="cand-card statut-${c.statut}" onclick="showCandidatView('${c.id}')">
       <div style="display:flex;align-items:flex-start;gap:10px">
         <div class="cand-avatar">${initials}</div>
         <div style="flex:1">
           <div class="cand-name">${c.nom}</div>
-          <div class="cand-meta">${c.background||'—'} ${c.qt?'· '+c.qt:''} ${c.heures?'· '+c.heures:''}</div>
-          <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap">
+          <div class="cand-sub">${c.background||'—'} ${c.qt?'· '+c.qt:''}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">
             <span class="badge ${statutBadge[c.statut]||'badge-grey'}">${statutLabels[c.statut]||c.statut}</span>
+            ${profilInfo?`<span style="background:${profilInfo.couleur}15;border:1px solid ${profilInfo.couleur}33;border-radius:6px;padding:1px 6px;font-size:10px;color:${profilInfo.couleur};font-weight:600"><span style="background:${profilInfo.couleur};color:#fff;border-radius:3px;padding:0 3px;font-size:9px;margin-right:2px">${profilInfo.logo}</span>${profilInfo.nom}</span>`:''}
           </div>
-          ${profilInfo?`<div style="display:inline-flex;align-items:center;gap:4px;background:${profilInfo.couleur}15;border:1px solid ${profilInfo.couleur}33;border-radius:6px;padding:2px 7px;font-size:10px;color:${profilInfo.couleur};font-weight:600;margin-top:4px"><span style="background:${profilInfo.couleur};color:#fff;border-radius:3px;padding:0 4px;font-size:9px">${profilInfo.logo||'?'}</span>${profilInfo.nom}</div>`:''}
-          ${nextPlan?`<div class="next-session-badge">📅 ${new Date(nextPlan.date).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})} ${nextPlan.heure||''} · ${nextPlan.terrain||nextPlan.type||'Séance prévue'}</div>`:''}
         </div>
       </div>
       <div class="cand-stats">
-        <div class="cand-stat"><div class="cand-stat-num">${seances.length}</div><div class="cand-stat-label">Séance(s)</div></div>
+        <div class="cand-stat"><div class="cand-stat-num">${seances.length}</div><div class="cand-stat-label">Séances</div></div>
         <div class="cand-stat"><div class="cand-stat-num">${lastDate}</div><div class="cand-stat-label">Dernière</div></div>
         ${scoreHtml}
-        ${c.retex ? '<div class="cand-stat"><div class="cand-stat-num">✅</div><div class="cand-stat-label">Retex</div></div>' : ''}
       </div>
+      ${nextPlan?`<div class="next-session-badge">📅 ${new Date(nextPlan.date).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})} ${nextPlan.heure||''} · ${nextPlan.terrain||nextPlan.type||'Séance prévue'}</div>`:''}
     </div>`;
-  }).join('');
+  }
+
+  // Active grid
+  if(!active.length){
+    grid.innerHTML = archived.length
+      ? `<div style="grid-column:1/-1;text-align:center;padding:20px;font-size:12px;color:var(--text3)">Aucun candidat actif · ${archived.length} archivé(s)</div>`
+      : `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><h3>Aucun résultat</h3><p>Modifie ta recherche</p></div>`;
+  } else {
+    grid.innerHTML = active.map(buildCard).join('');
+  }
+
+  // Archived section
+  const archivedSection = document.getElementById('dash-archived-section');
+  const archivedGrid    = document.getElementById('dash-archived-grid');
+  const archivedCount   = document.getElementById('dash-archived-count');
+  if(archivedSection){
+    if(archived.length){
+      archivedSection.style.display = 'block';
+      if(archivedCount) archivedCount.textContent = archived.length + ' candidat' + (archived.length>1?'s':'');
+      if(archivedGrid) archivedGrid.innerHTML = archived.map(buildCard).join('');
+    } else {
+      archivedSection.style.display = 'none';
+    }
+  }
 }
 
 // ════════════════════════════════════════════════════
@@ -2092,6 +2166,27 @@ function saveSeanceModal(){
 
   if(!c.seances) c.seances = [];
   c.seances.push(seance);
+
+  // Also add to calendar as a real (non-planned) session marker
+  if(seance.date){
+    if(!db.plannedSeances) db.plannedSeances = [];
+    // Remove any existing planned session for same candidat+date
+    db.plannedSeances = db.plannedSeances.filter(p=>!(p.candidatId===c.id && p.date===seance.date));
+    // Add as confirmed session (statut: 'done')
+    db.plannedSeances.push({
+      id: 'done-'+seanceId,
+      candidatId: c.id,
+      date: seance.date,
+      heure: '',
+      terrain: seance.terrain||'',
+      type: seance.type||'',
+      notes: seance.focus||'',
+      statut: 'done',
+      seanceId: seanceId,
+      created_at: new Date().toISOString()
+    });
+  }
+
   saveDB(db);
   closeModal('modal-seance');
 
@@ -3180,18 +3275,41 @@ function savePlanSeance(){
   if(!candidatId||!date){alert('Candidat et date obligatoires');return;}
   const db=loadDB();
   if(!db.plannedSeances) db.plannedSeances=[];
+  const planId = uuid();
+  const terrain = document.getElementById('plan-terrain').value;
+  const type = document.getElementById('plan-type').value;
+  const notes = document.getElementById('plan-notes').value;
+  const heure = document.getElementById('plan-heure').value;
+
   db.plannedSeances.push({
-    id:uuid(),candidatId,date,
-    heure:document.getElementById('plan-heure').value,
-    terrain:document.getElementById('plan-terrain').value,
-    type:document.getElementById('plan-type').value,
-    notes:document.getElementById('plan-notes').value,
+    id:planId, candidatId, date, heure, terrain, type, notes,
+    statut:'planned',
     created_at:new Date().toISOString()
   });
+
+  // Also create a real seance stub in the candidat fiche
+  const c = db.candidats.find(x=>x.id===candidatId);
+  if(c){
+    if(!c.seances) c.seances=[];
+    const seanceId = uuid();
+    c.seances.push({
+      id: seanceId,
+      date, terrain, type,
+      num: String((c.seances.length+1)),
+      focus: notes,
+      phases:{}, competences:{}, actions:[], bilan:{},
+      fromCalendar: true,
+      created_at: new Date().toISOString()
+    });
+    // Link plan to seance
+    db.plannedSeances[db.plannedSeances.length-1].seanceId = seanceId;
+  }
+
   saveDB(db);
   closeModal('modal-plan-seance');
   renderCalendar();
   renderDashboard();
+  if(c) alert('✅ Séance créée dans le calendrier ET dans la fiche de '+c.nom);
 }
 
 function deletePlan(pid){
@@ -4336,6 +4454,26 @@ async function sendRetexByEmail(){
   }
 }
 
+
+
+function toggleArchivedSection(){
+  const grid = document.getElementById('dash-archived-grid');
+  const arrow = document.getElementById('dash-archived-arrow');
+  if(!grid) return;
+  const isOpen = grid.style.display !== 'none';
+  grid.style.display = isOpen ? 'none' : 'grid';
+  if(arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+
+async function manualRefresh(){
+  const btn = document.getElementById('btn-refresh');
+  if(btn){ btn.textContent='↻'; btn.style.animation='spin 1s linear infinite'; }
+  setSyncStatus('syncing');
+  await syncFromSupabase();
+  renderDashboard();
+  populateProfilSelects();
+  if(btn){ btn.style.animation=''; btn.textContent='↻'; }
+}
 // ════════════════════════════════════════════════════
 // AUTH — Login/password
 // ════════════════════════════════════════════════════
