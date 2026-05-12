@@ -4247,43 +4247,80 @@ async function exportRetexCSV(){
   const clean = v => (v||'').toString().replace(/\n/g,' ').replace(/\r/g,'').replace(/"/g,"'");
 
   const headers = [
-    'Candidat','Statut','Date envoi','Date retex',
+    // Identifiants
+    'Candidat SIMPREP','Nom candidat (formulaire)','Statut','Date envoi','Date retex','Terrain','Email candidat',
+    // Section 1 — Infos générales
     'Compagnie évaluée','Type évaluation','Résultat','Résultat donné sur place',
-    'Compagnie actuelle','Machine actuelle','Machine évaluation','Rôle',
-    'HDV total','Multi-crew','IFR','Nb candidats','Nb examinateurs','Langue',
-    'Scénario vs retex','Éléments inattendus','Détails inattendus',
+    'Compagnie actuelle','Machine actuelle','Machine évaluation','Rôle dans séance',
+    'HDV total','Multi-crew','IFR','Passages AF','Examinateur',
+    'Nb candidats','Nb examinateurs','Langue séance',
+    // Section 1 — Contexte
+    'Scénario vs retex précédents','Éléments inattendus','Détails inattendus',
+    // Section 2 — Ambiance
     'Organisation','Attitude examinateurs',
-    'Stress','Charge mentale','Difficulté','Ressenti',
-    'Sujets briefing','Niveau briefing','Durée briefing','Questions techniques',
-    'Difficulté globale','Charge globale','Fatigue','Sensation','Style exo','Comportements',
+    'Stress avant simu (1-5)','Charge mentale ressentie (1-5)','Difficulté globale (1-5)','Ressenti ambiance',
+    // Section 3 — Briefing
+    'Sujets briefing','Niveau briefing','Durée briefing','Questions techniques posées',
+    // Section 4 — Dynamique globale
+    'Difficulté globale séance','Charge globale','Fatigue mentale','Sensation dominante','Style examinateurs','Comportements examinateurs marquants',
+    'Tags timeline','Gravité totale scénario','Timeline complète (sim_data)',
+    // Section 5-6 — Évaluation & erreurs
     'Points évalués','Ce qui fait la différence',
-    'Erreurs','Erreur principale','Gestion erreur',
-    'Coaching utile','Coaching insuffisant','Proche du vrai','Différent','À améliorer',
-    'Débrief examinateur','Commentaire exo','Axes amélioration','Ressenti final',
-    'Retex libre','Email candidat'
+    'Erreurs rencontrées','Erreur principale','Comment mieux gérer',
+    // Section 7 — Auto-évaluation
+    'Auto-éval Raw Data','Auto-éval Énergie','Auto-éval Holds','Auto-éval Interceptions',
+    'Auto-éval CRM','Auto-éval Monitoring','Auto-éval TEM','Auto-éval Pannes',
+    'Auto-éval Charge mentale','Auto-éval Communication','Auto-éval SOP',
+    // Section 8 — Retour coaching
+    'Coaching utile','Coaching insuffisant','Proche du vrai simu','Différent du coaching','À améliorer',
+    // Section 9 — Débrief
+    'Débrief examinateur','Commentaire examinateur','Résultat donné sur place (9)','Axes amélioration','Ressenti final',
+    // Section 10
+    'Retex libre'
   ];
 
   const rows = data.map(r => {
     const rep = r.reponses || {};
+    const ae = rep.auto_eval || {};
+    const submittedAt = r.submitted_at || rep.submitted_at || '';
     return [
-      r.candidat_nom||'', r.statut||'',
+      // Identifiants
+      r.candidat_nom||'', clean(rep.nom), r.statut||'',
       r.created_at?new Date(r.created_at).toLocaleDateString('fr-FR'):'',
-      r.submitted_at?new Date(r.submitted_at).toLocaleDateString('fr-FR'):'',
+      submittedAt?new Date(submittedAt).toLocaleDateString('fr-FR'):'',
+      clean(rep.terrain), clean(rep.email),
+      // Section 1
       clean(rep.compagnie_eval), clean(rep.type_eval), clean(rep.resultat), clean(rep.resultat_place),
       clean(rep.compagnie), clean(rep.machine), clean(rep.machine_eval), clean(rep.role_seance),
-      clean(rep.hdv), clean(rep.multicrew), clean(rep.ifr), clean(rep.nb_candidats), clean(rep.nb_examinateurs), clean(rep.langue_seance),
+      clean(rep.hdv), clean(rep.multicrew), clean(rep.ifr), clean(rep.passages), clean(rep.examinateur),
+      clean(rep.nb_candidats), clean(rep.nb_examinateurs), clean(rep.langue_seance),
+      // Contexte
       clean(rep.scenario_match), clean(rep.elements_inattendus), clean(rep.details_inattendus),
+      // Section 2
       clean(rep.organisation), clean(rep.attitude),
       clean(rep.stress), clean(rep.charge), clean(rep.difficulte), clean(rep.ressenti),
+      // Section 3
       clean(rep.sujets_briefing), clean(rep.niveau_briefing), clean(rep.duree_briefing), clean(rep.questions),
-      clean(rep.global_difficulte), clean(rep.global_charge), clean(rep.global_fatigue), clean(rep.global_sensation), clean(rep.global_style_exo),
+      // Section 4
+      clean(rep.global_difficulte), clean(rep.global_charge), clean(rep.global_fatigue),
+      clean(rep.global_sensation), clean(rep.global_style_exo),
       clean(Array.isArray(rep.global_comportements)?rep.global_comportements.join(', '):rep.global_comportements),
+      clean(rep.tags), clean(rep.tags?rep.tags.match(/gravité:(\d+)/)?.[1]||'':''),
+      clean(rep.sim_data),
+      // Section 5-6
       clean(rep.pts_evalues), clean(rep.difference),
       clean(rep.erreurs), clean(rep.erreur_principale), clean(rep.erreur_gestion),
+      // Section 7 — auto-eval
+      ae.raw||'', ae.ener||'', ae.holds||'', ae.inter||'',
+      ae.crm||'', ae.monit||'', ae.tem||'', ae.panne||'',
+      ae.gcm||'', ae.comm||'', ae.sop||'',
+      // Section 8
       clean(rep.utile), clean(rep.insuf), clean(rep.proche), clean(rep.different), clean(rep.ameliorer),
-      clean(rep.debrief), clean(rep.exo_comment), clean(rep.axes), clean(rep.ressenti_final),
-      clean(rep.retex_libre), clean(rep.email)
-    ].map(v=>'"'+v+'"').join(',');
+      // Section 9
+      clean(rep.debrief), clean(rep.exo_comment), clean(rep.resultat_place), clean(rep.axes), clean(rep.ressenti_final),
+      // Section 10
+      clean(rep.retex_libre)
+    ].map(v=>'"'+String(v)+'"').join(',');
   });
 
   const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
