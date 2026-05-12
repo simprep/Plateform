@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>SIMPREP — Plateforme Instructeur</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -541,14 +542,21 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
       <div style="width:200px;height:2px;background:#E8001D;margin:0 auto 8px"></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:.08em;text-transform:uppercase">Plateforme Instructeur</div>
     </div>
-    <!-- Form PIN -->
+    <!-- Form email/password -->
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px">
-      <div style="margin-bottom:20px;text-align:center">
-        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Code d'accès</label>
-        <input id="login-pin" type="password" inputmode="numeric" maxlength="8" placeholder="••••••" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:14px 12px;font-size:24px;color:#fff;font-family:monospace;outline:none;text-align:center;letter-spacing:.3em" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Email</label>
+        <input id="login-email" type="email" autocomplete="email" placeholder="instructeur@simprep.fr" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:11px 12px;font-size:14px;color:#fff;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
       </div>
-      <button onclick="doLogin()" style="width:100%;background:#E8001D;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.02em">Accéder</button>
-      <div id="login-error" style="display:none;margin-top:10px;text-align:center;font-size:11px;color:#F87171">Code incorrect</div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:10px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Mot de passe</label>
+        <input id="login-pass" type="password" autocomplete="current-password" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:11px 12px;font-size:14px;color:#fff;font-family:inherit;outline:none" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button onclick="doLogin()" id="login-btn" style="width:100%;background:#E8001D;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.02em">Connexion</button>
+      <div id="login-error" style="display:none;margin-top:10px;text-align:center;font-size:11px;color:#F87171"></div>
+      <div style="margin-top:14px;text-align:center">
+        <button onclick="showResetPassword()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:11px;cursor:pointer;font-family:inherit">Mot de passe oublié ?</button>
+      </div>
     </div>
     <div style="text-align:center;margin-top:16px;font-size:10px;color:rgba(255,255,255,0.2)">SIMPREP · Usage instructeur uniquement</div>
   </div>
@@ -1009,11 +1017,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
       <div id="sb-status" style="display:none;padding:10px;border-radius:6px;font-size:11px;margin-top:10px"></div>
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:10px">Changer les identifiants de connexion</div>
-      <div class="form-group">
-          <label class="form-label">Nouveau code d'accès</label>
-          <input class="form-input" id="new-login-pass" placeholder="ex. simprep2026" type="text">
-        </div>
-      <button class="btn btn-secondary btn-sm" onclick="changeCredentials()">Mettre à jour le code</button>
+      <p style="font-size:11px;color:var(--text2)">Le mot de passe est géré par Supabase Auth. Pour le changer, utilise "Mot de passe oublié ?" sur l'écran de connexion ou le dashboard Supabase.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('modal-supabase')">Annuler</button>
@@ -3599,13 +3603,15 @@ function importData(e){
 // ════════════════════════════════════════════════════
 // SUPABASE
 // ════════════════════════════════════════════════════
-// ════ SUPABASE CONFIG (hardcodée) ════
+// ════ SUPABASE CLIENT ════
 const SB_URL = "https://erzinefnmcyxhtmkimmt.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyemluZWZubWN5eGh0bWtpbW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1ODYxNjQsImV4cCI6MjA5NDE2MjE2NH0.nLW6Cy3vWjfSSOXlrrMalwfyXg7zbLTM5sRR8D3HUCU";
-const SB_INSTRUCTOR = "simprep-victor";
+const sbClient = supabase.createClient(SB_URL, SB_KEY);
+
+let currentUser = null; // set after login
 
 function getSupabaseConfig(){
-  return {url: SB_URL, key: SB_KEY, instructorId: SB_INSTRUCTOR};
+  return {url: SB_URL, key: SB_KEY, instructorId: currentUser ? currentUser.id : 'anon'};
 }
 
 function openSupabaseModal(){ openModal("modal-supabase"); }
@@ -3638,39 +3644,35 @@ async function testSupabaseConnection(){
 }
 
 async function syncToSupabase(){
-  const cfg=getSupabaseConfig();
-  if(!cfg) return;
+  if(!currentUser) return;
   setSyncStatus('syncing');
   try{
     const db=loadDB();
-    const payload={id:cfg.instructorId,instructor_id:cfg.instructorId,data:db,updated_at:new Date().toISOString()};
-    const r=await fetch(cfg.url+'/rest/v1/simprep_data',{
-      method:'POST',
-      headers:{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
-      body:JSON.stringify(payload)
+    const {error}=await sbClient.from('simprep_data').upsert({
+      id: currentUser.id,
+      instructor_id: currentUser.id,
+      data: db,
+      updated_at: new Date().toISOString()
     });
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(error) throw error;
     setSyncStatus('ok');
     localStorage.setItem('simprep_last_sync',new Date().toISOString());
   }catch(err){console.warn('Sync error:',err);setSyncStatus('error');}
 }
 
 async function syncFromSupabase(){
-  const cfg=getSupabaseConfig();
-  if(!cfg) return;
+  if(!currentUser) return;
   setSyncStatus('syncing');
   try{
-    const r=await fetch(cfg.url+'/rest/v1/simprep_data?id=eq.'+cfg.instructorId+'&select=data,updated_at',{
-      headers:{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key}
-    });
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const rows=await r.json();
-    if(!rows.length){setSyncStatus('ok');return;}
-    const remoteTime=new Date(rows[0].updated_at).getTime();
+    const {data,error}=await sbClient.from('simprep_data').select('data,updated_at').eq('id',currentUser.id).single();
+    if(error&&error.code!=='PGRST116'){throw error;}
+    if(!data){setSyncStatus('ok');return;}
+    const remoteTime=new Date(data.updated_at).getTime();
     const localLastSync=localStorage.getItem('simprep_last_sync');
     const localTime=localLastSync?new Date(localLastSync).getTime():0;
     if(remoteTime>localTime){
-      saveDB(rows[0].data);
+      const _orig=_origSaveDB||saveDB;
+      _orig(data.data);
       renderDashboard();
       populateProfilSelects();
     }
@@ -3704,10 +3706,8 @@ saveDB=function(db){
 };
 
 function changeCredentials(){
-  const pin = document.getElementById('new-login-pass').value.trim();
-  if(!pin){alert('Code requis');return;}
-  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify({pin}));
-  alert('Code mis à jour ✅');
+  // Password managed by Supabase — use reset email
+  showResetPassword();
 }
 
 // Override cloud button
@@ -3722,44 +3722,50 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ════════════════════════════════════════════════════
 // AUTH — Login/password
 // ════════════════════════════════════════════════════
-const AUTH_KEY = 'simprep_auth';
-const CREDENTIALS_KEY = 'simprep_credentials';
-
-function getCredentials(){
-  try{ return JSON.parse(localStorage.getItem(CREDENTIALS_KEY)||'null'); }catch(e){ return null; }
+// ════ SUPABASE AUTH ════
+async function isAuthenticated(){
+  const { data: { session } } = await sbClient.auth.getSession();
+  if(session) currentUser = session.user;
+  return !!session;
 }
 
-function isAuthenticated(){
-  const session = localStorage.getItem(AUTH_KEY);
-  if(!session) return false;
-  try{
-    const {expires} = JSON.parse(session);
-    return new Date(expires) > new Date();
-  }catch(e){ return false; }
-}
-
-function doLogin(){
-  const pin = document.getElementById('login-pin').value.trim();
-  const creds = getCredentials();
-  const validPin = creds ? creds.pin : 'simprep2026';
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-error');
-  if(pin === validPin){
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 30);
-    localStorage.setItem(AUTH_KEY, JSON.stringify({expires: expires.toISOString()}));
-    document.getElementById('login-screen').style.display='none';
-    errEl.style.display='none';
-    startApp();
-  } else {
+  const btn = document.getElementById('login-btn');
+
+  if(!email||!pass){ errEl.style.display='block'; errEl.textContent='Email et mot de passe requis'; return; }
+
+  btn.textContent='Connexion…'; btn.disabled=true;
+  errEl.style.display='none';
+
+  const { data, error } = await sbClient.auth.signInWithPassword({email, password: pass});
+
+  if(error){
     errEl.style.display='block';
-    document.getElementById('login-pin').value='';
-    document.getElementById('login-pin').focus();
+    errEl.textContent = error.message.includes('Invalid') ? 'Email ou mot de passe incorrect' : error.message;
+    btn.textContent='Connexion'; btn.disabled=false;
+    return;
   }
+
+  currentUser = data.user;
+  document.getElementById('login-screen').style.display='none';
+  startApp();
 }
 
-function logout(){
-  localStorage.removeItem(AUTH_KEY);
+async function logout(){
+  await sbClient.auth.signOut();
+  currentUser = null;
   location.reload();
+}
+
+async function showResetPassword(){
+  const email = document.getElementById('login-email').value.trim();
+  if(!email){ alert("Entre ton email d'abord"); return; }
+  const { error } = await sbClient.auth.resetPasswordForEmail(email);
+  if(error) alert('Erreur : ' + error.message);
+  else alert('Email de réinitialisation envoyé à ' + email);
 }
 
 function setLoadingMsg(msg, pct){
@@ -3790,15 +3796,18 @@ async function startApp(){
 }
 
 // ══ BOOT ══
-(function boot(){
+(async function boot(){
   const loadingEl = document.getElementById('loading-screen');
   const loginEl = document.getElementById('login-screen');
-  if(isAuthenticated()){
+  // Check existing Supabase session
+  const authed = await isAuthenticated();
+  if(authed){
     if(loginEl) loginEl.style.display='none';
-    startApp(); // Supabase always configured
+    startApp();
   } else {
     if(loadingEl) loadingEl.style.display='none';
     if(loginEl) loginEl.style.display='flex';
+    setTimeout(()=>document.getElementById('login-email')?.focus(),100);
   }
 })();
 
