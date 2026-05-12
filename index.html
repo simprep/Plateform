@@ -3790,6 +3790,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 const EMAILJS_PUBLIC_KEY = "5ZOYkeHEtkwNj_OyU";
 const EMAILJS_SERVICE_ID = "service_np9pjk4";
 const EMAILJS_TEMPLATE_ID = "template_btpiy14";
+const EMAILJS_SHARE_TEMPLATE_ID = "template_y58x40v";
 
 async function sendRetexRequest(){
   const db = loadDB();
@@ -3862,6 +3863,7 @@ async function renderRetexList(){
     return;
   }
 
+  _lastRetexData = data || [];
   container.innerHTML = (data||[]).map(r => {
     const rep = r.reponses || {};
     const hasData = r.statut !== 'en_attente' && Object.keys(rep).length > 0;
@@ -3879,7 +3881,7 @@ async function renderRetexList(){
     html += '<div style="display:flex;align-items:center;gap:10px">'+statusBadge+'<span style="font-size:11px;color:rgba(255,255,255,.5)">Envoyé le '+dSent+(dRecv?' · Reçu le '+dRecv:'')+'</span></div>';
     html += '<div style="display:flex;gap:6px">';
     if(r.statut==='recu') html += '<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="markRetexLu(\'' + r.id + '\')">👁 Marquer lu</button>';
-    if(hasData) html += '<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="openShareRetexModal(\'' + r.id + '\',' + JSON.stringify(r.reponses||{}) + ')">📤 Partager</button>';
+    if(hasData) html += '<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="openShareRetexModal(\'' + r.id + '\')" >📤 Partager</button>';
     html += '<button class="btn btn-sm" style="background:rgba(220,38,38,.2);color:#fca5a5;border:1px solid rgba(220,38,38,.3)" onclick="deleteRetex(\'' + r.id + '\')">🗑</button>';
     html += '</div></div>';
 
@@ -4179,11 +4181,12 @@ async function exportRetexCSV(){
 // SHARE RETEX BY EMAIL
 // ════════════════════════════════════════════════════
 let _shareRetexData = null;
+let _lastRetexData = [];
 
-function openShareRetexModal(retexId, reponses){
+function openShareRetexModal(retexId){
+  // Find reponses from already-fetched data
+  const reponses = _lastRetexData ? (_lastRetexData.find(r=>r.id===retexId)||{}).reponses || {} : {};
   _shareRetexData = {id: retexId, rep: reponses};
-
-  // Build preview
   const rep = reponses || {};
   const lines = [];
   if(rep.compagnie_eval) lines.push('Compagnie : ' + rep.compagnie_eval);
@@ -4205,6 +4208,62 @@ function openShareRetexModal(retexId, reponses){
   openModal('modal-share-retex');
 }
 
+function buildTimelineTextForEmail(simData){
+  // Returns plain structured text — no HTML, works in all email clients
+  if(!simData || simData.trim() === ' gravité:0') return 'Aucune phase enregistrée.';
+  const blocks = simData.split(/(?=Phase \d+)/).filter(b=>b.trim());
+  if(!blocks.length) return 'Aucune phase enregistrée.';
+
+  const gravLabel = g => {
+    const n=parseInt(g)||0;
+    if(n>=8) return '🔴 Très élevée ('+n+'/10)';
+    if(n>=6) return '🟠 Élevée ('+n+'/10)';
+    if(n>=4) return '🟡 Modérée ('+n+'/10)';
+    if(n>=2) return '🔵 Faible ('+n+'/10)';
+    return '';
+  };
+
+  const phaseIcons = {
+    roulage:'🛞', décollage:'✈️', montée:'↗️', croisière:'✈️',
+    descente:'↘️', approche:'🎯', atterrissage:'🛬', finale:'🛬',
+    remise:'↩️', panne:'⚠️', urgence:'🆘', holding:'🔄',
+    attente:'🔄', navigation:'🧭', mania:'🎮', virage:'🔄',
+    briefing:'📋', loft:'🧠'
+  };
+
+  function getPhaseIcon(name){
+    const n = name.toLowerCase();
+    for(const [k,v] of Object.entries(phaseIcons)){
+      if(n.includes(k)) return v;
+    }
+    return '▸';
+  }
+
+  return blocks.map(block => {
+    const hm = block.match(/Phase (\d+)\s*\[([^\]]+)\]\s*gravité:(\d+)/);
+    if(!hm) return '';
+    const num=hm[1], name=hm[2], grav=parseInt(hm[3]);
+    const icon = getPhaseIcon(name);
+    const rest = block.replace(/Phase \d+\s*\[[^\]]+\]\s*gravité:\d+/,'').trim();
+    const pairs = rest.split(' | ').map(s=>s.trim()).filter(Boolean);
+
+    let txt = icon + ' Phase ' + num + ' — ' + name;
+    if(grav>0) txt += '  [' + gravLabel(grav) + ']';
+    txt += '\n';
+
+    pairs.forEach(pair => {
+      const ci = pair.indexOf(':');
+      if(ci<0) return;
+      const key = pair.substring(0,ci).trim();
+      const val = pair.substring(ci+1).trim();
+      if(!val) return;
+      txt += '   • ' + key + ' : ' + val + '\n';
+    });
+
+    return txt;
+  }).filter(Boolean).join('\n');
+}
+
 async function sendRetexByEmail(){
   const to = document.getElementById('share-email').value.trim();
   if(!to){ alert('Adresse email requise'); return; }
@@ -4215,20 +4274,19 @@ async function sendRetexByEmail(){
   const db = loadDB();
   const cand = db.candidats.find(x=>x.id===currentCandidatId);
 
-  // Build summary text
-  const lines = [];
-  if(cand)          lines.push('Candidat : ' + cand.nom);
-  if(rep.compagnie_eval) lines.push('Compagnie évaluée : ' + rep.compagnie_eval);
-  if(rep.resultat)  lines.push('Résultat : ' + rep.resultat);
-  if(rep.machine_eval) lines.push('Machine : ' + rep.machine_eval);
-  if(rep.type_eval) lines.push('Type : ' + rep.type_eval);
-  if(rep.sujets_briefing) lines.push('Briefing : ' + rep.sujets_briefing);
-  if(rep.erreur_principale) lines.push('\nErreur principale :\n' + rep.erreur_principale);
-  if(rep.utile)     lines.push('\nCoaching utile :\n' + rep.utile);
-  if(rep.ameliorer) lines.push('\nÀ améliorer :\n' + rep.ameliorer);
-  if(rep.retex_libre) lines.push('\nRetex libre :\n' + rep.retex_libre);
+  const isWin = rep.resultat === 'WIN';
+  const isFail = rep.resultat === 'FAIL';
+  const resultColor = isWin?'#059669':isFail?'#DC2626':'#1D4ED8';
+  const resultBg = isWin?'#ECFDF5':isFail?'#FEF2F2':'#EFF6FF';
 
-  const summary = lines.join('\n');
+  const dateRetex = rep.submitted_at
+    ? new Date(rep.submitted_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})
+    : new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+
+  const typeMachineRole = [rep.type_eval, rep.machine_eval, rep.role_seance].filter(Boolean).join(' · ');
+
+  // Build timeline HTML for email
+  const timelineHtml = buildTimelineTextForEmail(rep.sim_data || '');
 
   statusEl.style.display = 'block';
   statusEl.style.background = '#EFF6FF';
@@ -4237,17 +4295,25 @@ async function sendRetexByEmail(){
 
   emailjs.init(EMAILJS_PUBLIC_KEY);
   try {
-    // Create a sharing template — reuse existing template with adapted variables
-    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_SHARE_TEMPLATE_ID, {
       to_email: to,
-      candidat_prenom: cand ? cand.nom.split(' ').pop() : 'Candidat',
-      candidat_nom: cand ? cand.nom : '',
-      retex_url: customMsg || 'Retex partagé depuis SIMPREP',
-      instructeur_nom: currentUser?.email?.split('@')[0] || 'Votre instructeur',
+      candidat_nom: cand ? cand.nom : (rep.nom || 'Candidat'),
+      resultat: rep.resultat || '—',
+      result_color: resultColor,
+      result_bg: resultBg,
+      compagnie_eval: rep.compagnie_eval || '—',
+      type_machine_role: typeMachineRole || '—',
+      date_retex: dateRetex,
+      message_intro: customMsg || 'Voici le retex de ' + (cand ? cand.nom : 'ce candidat') + '.',
+      erreur_principale: rep.erreur_principale || '—',
+      erreur_gestion: rep.erreur_gestion || '',
+      debrief_exo: rep.debrief || '',
+      utile: rep.utile || '',
+      ameliorer: rep.ameliorer || '',
+      retex_libre: rep.retex_libre || '',
+      timeline_html: timelineHtml || 'Aucune phase enregistrée.',
       name: to,
-      email: to,
-      // Extra context in the URL field as message body
-      message: (customMsg ? customMsg + '\n\n' : '') + summary
+      email: to
     });
     statusEl.style.background = '#ECFDF5';
     statusEl.style.color = '#059669';
@@ -4255,9 +4321,14 @@ async function sendRetexByEmail(){
     setTimeout(() => closeModal('modal-share-retex'), 2000);
   } catch(err) {
     console.error('EmailJS error:', err);
-    // Fallback: mailto
     const subject = encodeURIComponent('Retex SIMPREP — ' + (cand ? cand.nom : 'Candidat'));
-    const body = encodeURIComponent((customMsg ? customMsg + '\n\n' : '') + summary);
+    const lines = [];
+    if(rep.compagnie_eval) lines.push('Compagnie : ' + rep.compagnie_eval);
+    if(rep.resultat) lines.push('Résultat : ' + rep.resultat);
+    if(rep.erreur_principale) lines.push('Erreur principale : ' + rep.erreur_principale);
+    if(rep.utile) lines.push('Coaching utile : ' + rep.utile);
+    if(rep.retex_libre) lines.push('Retex libre : ' + rep.retex_libre);
+    const body = encodeURIComponent((customMsg ? customMsg + '\n\n' : '') + lines.join('\n'));
     window.open('mailto:' + to + '?subject=' + subject + '&body=' + body);
     statusEl.style.background = '#FFFBEB';
     statusEl.style.color = '#D97706';
