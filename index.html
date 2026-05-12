@@ -4338,29 +4338,36 @@ async function exportRetexCSV(){
 let _shareRetexData = null;
 let _lastRetexData = [];
 
-function openShareRetexModal(retexId){
-  // Find reponses from already-fetched data
-  const reponses = _lastRetexData ? (_lastRetexData.find(r=>r.id===retexId)||{}).reponses || {} : {};
+async function openShareRetexModal(retexId){
+  document.getElementById('share-email').value = '';
+  document.getElementById('share-message').value = '';
+  document.getElementById('share-retex-status').style.display = 'none';
+  document.getElementById('share-retex-preview').innerHTML = '<em style="color:var(--text3)">Chargement...</em>';
+  openModal('modal-share-retex');
+
+  // Always fetch fresh from Supabase
+  let reponses = (_lastRetexData.find(r=>r.id===retexId)||{}).reponses || null;
+
+  if(!reponses){
+    const {data} = await sbClient.from('retex').select('reponses').eq('id', retexId).single();
+    reponses = data?.reponses || {};
+  }
+
   _shareRetexData = {id: retexId, rep: reponses};
   const rep = reponses || {};
+
   const lines = [];
-  if(rep.compagnie_eval) lines.push('Compagnie : ' + rep.compagnie_eval);
-  if(rep.resultat)       lines.push('Résultat : ' + rep.resultat);
-  if(rep.machine_eval)   lines.push('Machine : ' + rep.machine_eval);
+  if(rep.compagnie_eval)    lines.push('Compagnie : ' + rep.compagnie_eval);
+  if(rep.resultat)          lines.push('Résultat : ' + rep.resultat);
+  if(rep.machine_eval)      lines.push('Machine : ' + rep.machine_eval);
   if(rep.erreur_principale) lines.push('Erreur principale : ' + rep.erreur_principale.substring(0,120));
-  if(rep.utile)          lines.push('Coaching utile : ' + rep.utile.substring(0,120));
-  if(rep.ameliorer)      lines.push('À améliorer : ' + rep.ameliorer.substring(0,120));
-  if(rep.retex_libre)    lines.push('Retex libre : ' + rep.retex_libre.substring(0,200));
+  if(rep.utile)             lines.push('Coaching utile : ' + rep.utile.substring(0,120));
+  if(rep.ameliorer)         lines.push('À améliorer : ' + rep.ameliorer.substring(0,120));
+  if(rep.retex_libre)       lines.push('Retex libre : ' + rep.retex_libre.substring(0,200));
 
   document.getElementById('share-retex-preview').innerHTML = lines.length
     ? lines.map(l => '<div style="margin-bottom:4px">• ' + l + '</div>').join('')
     : '<em>Retex avec peu de contenu textuel</em>';
-
-  document.getElementById('share-email').value = '';
-  document.getElementById('share-message').value = '';
-  document.getElementById('share-retex-status').style.display = 'none';
-
-  openModal('modal-share-retex');
 }
 
 function buildTimelineTextForEmail(simData){
