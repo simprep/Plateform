@@ -2531,27 +2531,44 @@ function showStatus(type, msg) {
 // ════════════════════════════════════════════════════
 async function submitRetex() {
   var data = collectData();
-  if (!data.nom)   { showStatus('error','⚠️ Merci de renseigner ton nom / prénom.'); return; }
-  if (!data.email) { showStatus('error','⚠️ Merci d\'entrer ton adresse email.'); return; }
-  if (!data.date)  { showStatus('error','⚠️ Merci de renseigner la date du simulateur.'); return; }
+  if (!data.nom)  { showStatus('error','⚠️ Merci de renseigner ton nom / prénom.'); return; }
+  if (!data.date) { showStatus('error','⚠️ Merci de renseigner la date du simulateur.'); return; }
+  if (!_retexToken) { showStatus('error','⚠️ Lien invalide — contacte ton instructeur.'); return; }
+
   var btn = document.getElementById('btn-send');
   btn.disabled = true;
   showProgress();
   showStatus('loading','⏳ Envoi en cours…');
+
   try {
-    setProgress(20, '📋 Enregistrement dans Airtable…');
-    try { await pushToAirtable(data); setProgress(40,'✅ Airtable OK…'); }
-    catch(e) { throw new Error('Airtable: ' + (e?.message||JSON.stringify(e))); }
-    setProgress(60, '📧 Envoi email…');
-    try { await sendEmail(data); setProgress(80,'✅ Email OK…'); }
-    catch(e) { throw new Error('EmailJS: ' + (e?.text||e?.message||JSON.stringify(e))); }
-    setProgress(100,'✅ Envoi terminé !');
-    showStatus('success','✅ Retex envoyé avec succès ! Merci ' + (data.nom||'') + ' 🙏');
+    // 1. Sauvegarde Supabase
+    setProgress(30, '💾 Enregistrement…');
+    var res = await _SB.from('retex').update({
+      reponses: data,
+      statut: 'recu',
+      submitted_at: new Date().toISOString()
+    }).eq('token', _retexToken);
+    if (res.error) throw new Error('Supabase : ' + res.error.message);
+    setProgress(70, '✅ Données enregistrées…');
+
+    // 2. Email de confirmation (optionnel — si email renseigné)
+    if (data.email) {
+      try { await sendEmail(data); } catch(e) { console.warn('Email non envoyé:', e); }
+    }
+
+    setProgress(100, '✅ Envoi terminé !');
+    showStatus('success', '✅ Retex envoyé avec succès ! Merci ' + (data.nom||'') + ' 🙏');
     btn.textContent = '✅ Retex envoyé !';
     btn.style.background = '#065F46';
+
+    // Overlay succès
+    setTimeout(function() {
+      document.getElementById('simprep-success').style.display = 'flex';
+    }, 1500);
+
   } catch(err) {
     console.error(err);
-    showStatus('error','❌ Erreur : ' + (err?.message||err?.text||JSON.stringify(err)));
+    showStatus('error', '❌ Erreur : ' + (err?.message||err?.text||JSON.stringify(err)));
     btn.disabled = false;
     setProgress(0,'');
   }
