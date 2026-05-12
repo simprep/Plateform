@@ -672,7 +672,6 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <button class="inner-tab active" onclick="showInnerTab('progression',this)">📈 Progression</button>
     <button class="inner-tab" onclick="showInnerTab('seances',this)">📋 Séances</button>
     <button class="inner-tab" onclick="showInnerTab('retex',this)">📝 Retex épreuve</button>
-    <button class="inner-tab" onclick="showInnerTab('retexlist',this)">📬 Retex reçus</button>
     <button class="inner-tab" onclick="showInnerTab('presession',this)">🎯 Pré-séance</button>
   </div>
 
@@ -711,25 +710,15 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
 
   <!-- RETEX TAB -->
   <div class="inner-panel" id="panel-retex">
-    <div id="retex-empty" class="empty-state" style="display:none">
-      <div class="icon">📝</div>
-      <h3>Pas encore de retex</h3>
-      <p>Le retex sera saisi après l'épreuve réelle du candidat</p>
-      <button class="btn btn-primary" style="margin-top:14px" onclick="showInnerTab('retex',document.querySelector('.inner-tab:nth-child(3)'));openRetexForm()">Saisir le retex</button>
-    </div>
-    <div id="retex-form-wrap">
-      <!-- Retex form injected here -->
-    </div>
-  </div>
-
-  <!-- RETEX REÇUS TAB -->
-  <div class="inner-panel" id="panel-retexlist">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <span style="font-size:12px;color:var(--text2)" id="retexlist-count">Chargement…</span>
+      <span style="font-size:12px;color:var(--text2)" id="retexlist-count"></span>
       <button class="btn btn-secondary btn-sm" onclick="exportRetexCSV()">⬇ Exporter CSV</button>
     </div>
     <div id="retexlist-container"></div>
   </div>
+
+  <!-- panel-retexlist kept as alias -->
+  <div class="inner-panel" id="panel-retexlist" style="display:none"></div>
 
   <!-- PRÉ-SÉANCE TAB -->
   <div class="inner-panel" id="panel-presession">
@@ -1133,6 +1122,33 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
   </div>
 </div>
 
+<!-- Modal partager retex -->
+<div class="modal-overlay" id="modal-share-retex">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">📤 Partager ce retex</span>
+      <button class="modal-close" onclick="closeModal('modal-share-retex')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Envoie un récapitulatif de ce retex par email à la personne de ton choix.</p>
+      <div class="form-group">
+        <label class="form-label">Adresse email du destinataire *</label>
+        <input class="form-input" id="share-email" type="email" placeholder="exemple@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Message personnalisé (optionnel)</label>
+        <textarea class="form-input" id="share-message" placeholder="Voici le retex de..." style="min-height:70px;font-size:13px"></textarea>
+      </div>
+      <div id="share-retex-preview" style="background:var(--bg2);border-radius:8px;padding:12px;font-size:11px;color:var(--text2);margin-top:8px;max-height:160px;overflow-y:auto;line-height:1.6"></div>
+      <div id="share-retex-status" style="display:none;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-share-retex')">Annuler</button>
+      <button class="btn btn-primary" onclick="sendRetexByEmail()">📤 Envoyer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal planifier séance -->
 <div class="modal-overlay" id="modal-plan-seance">
   <div class="modal">
@@ -1268,7 +1284,7 @@ function showInnerTab(id, btn){
   if(id==='progression') renderProgression();
   if(id==='seances') renderSeances();
   if(id==='retex') renderRetexPanel();
-  if(id==='retexlist') renderRetexList();
+  if(id==='retexlist') renderRetexList(); // kept for compat
   if(id==='presession') renderPresession();
 }
 
@@ -1546,24 +1562,10 @@ function renderSeances(){
 // ════════════════════════════════════════════════════
 // RETEX PANEL
 // ════════════════════════════════════════════════════
-function renderRetexPanel(){
-  const db = loadDB();
-  const c = db.candidats.find(x=>x.id===currentCandidatId);
-  if(!c) return;
-
-  const empty = document.getElementById('retex-empty');
-  const wrap = document.getElementById('retex-form-wrap');
-
-  if(!c.retex || Object.keys(c.retex).length === 0){
-    empty.style.display='block';
-    wrap.innerHTML='';
-    // Show add retex button
-    empty.innerHTML = `<div class="icon">📝</div><h3>Pas encore de retex</h3><p>Le retex sera saisi après l'épreuve réelle du candidat</p>
-    <button class="btn btn-primary" style="margin-top:14px" onclick="openRetexForm()">Saisir le retex</button>`;
-  } else {
-    empty.style.display='none';
-    renderRetexView(c.retex, wrap);
-  }
+async function renderRetexPanel(){
+  if(!currentUser) return;
+  // Route to unified renderRetexList
+  await renderRetexList();
 }
 
 function openRetexForm(){
@@ -3332,53 +3334,92 @@ function extractRetexInfo(text){
   return {resultat, terrains:terrainMatch, erreurs, positifs};
 }
 
-function renderRetexAnalytics(){
-  const db=loadDB();
-  const retexBruts=db.retexBruts||[];
-  // Also include retex from candidat fiches
-  const retexFiches=db.candidats.filter(c=>c.retex&&c.retex.libre).map(c=>({
-    id:'fiche-'+c.id, candidatId:c.id, nomCandid:c.nom,
-    resultat:c.retex.resultat||'inconnu', texte:c.retex.libre,
-    extracted:extractRetexInfo(c.retex.libre||''), created_at:c.retex.saved_at||''
-  }));
-
-  const allRetex=[...retexBruts,...retexFiches.filter(r=>!retexBruts.find(b=>b.candidatId===r.candidatId))];
-
-  document.getElementById('retex-count').textContent=`${allRetex.length} retex`;
-  document.getElementById('an-pieges').textContent=allRetex.length;
+async function renderRetexAnalytics(){
+  if(!currentUser) return;
+  const db = loadDB();
 
   // Populate candidat select
-  const sel=document.getElementById('retex-import-candidat');
-  if(sel){
-    sel.innerHTML='<option value="">— Sélectionner (optionnel) —</option>'+
-      db.candidats.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
-  }
+  const sel = document.getElementById('retex-import-candidat');
+  if(sel) sel.innerHTML = '<option value="">— Sélectionner (optionnel) —</option>' +
+    db.candidats.map(c=>'<option value="'+c.id+'">'+c.nom+'</option>').join('');
 
-  const container=document.getElementById('retex-list-container');
+  const container = document.getElementById('retex-list-container');
+  if(!container) return;
+  container.innerHTML = '<p style="font-size:11px;color:var(--text3)">Chargement…</p>';
+
+  // Fetch from Supabase — all non-pending
+  const {data, error} = await sbClient
+    .from('retex')
+    .select('id,candidat_nom,statut,submitted_at,created_at,reponses')
+    .eq('user_id', currentUser.id)
+    .neq('statut','en_attente')
+    .order('submitted_at', {ascending:false});
+
+  const sbRetex = (error||!data) ? [] : data;
+  const retexBruts = db.retexBruts||[];
+
+  const allRetex = [
+    ...sbRetex.map(r=>({
+      id:r.id, isSB:true,
+      nom: r.candidat_nom||'—',
+      resultat: r.reponses?.resultat||'—',
+      compagnie: r.reponses?.compagnie_eval||'',
+      machine: r.reponses?.machine_eval||'',
+      erreur: r.reponses?.erreur_principale||'',
+      utile: r.reponses?.utile||'',
+      ameliorer: r.reponses?.ameliorer||'',
+      libre: r.reponses?.retex_libre||'',
+      date: r.submitted_at||r.created_at||''
+    })),
+    ...retexBruts.map(r=>({
+      id:r.id, isSB:false,
+      nom:r.nomCandid||'—',
+      resultat:r.resultat||'inconnu',
+      compagnie:'', machine:'', erreur:'', utile:'', ameliorer:'',
+      libre:r.texte||'',
+      date:r.created_at||''
+    }))
+  ];
+
+  const countEl = document.getElementById('retex-count');
+  if(countEl) countEl.textContent = allRetex.length + ' retex';
+  const piegesEl = document.getElementById('an-pieges');
+  if(piegesEl) piegesEl.textContent = allRetex.length;
+
   if(!allRetex.length){
-    container.innerHTML='<div class="empty-state" style="padding:30px"><div class="icon">📝</div><h3>Aucun retex</h3><p>Importez le premier retex ci-dessus</p></div>';
+    container.innerHTML = '<div class="empty-state" style="padding:30px"><div class="icon">📝</div><h3>Aucun retex reçu</h3><p>Les retex apparaîtront ici une fois que les candidats auront rempli leur formulaire</p></div>';
     return;
   }
 
-  const resultColors={admis:'badge-green',ajourn:'badge-red',en_attente:'badge-gold',inconnu:'badge-grey'};
-  const resultLabels={admis:'Admis ✅',ajourn:'Ajourné',en_attente:'En attente',inconnu:'Inconnu'};
+  const rColor = {WIN:'#059669',FAIL:'#DC2626',WAITLIST:'#D97706'};
+  const rBg = {WIN:'#ECFDF5',FAIL:'#FEF2F2',WAITLIST:'#FFFBEB'};
 
-  container.innerHTML=allRetex.map(r=>{
-    const errHtml=(r.extracted&&r.extracted.erreurs||[]).map(e=>`<span style="background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:1px 6px;font-size:9px;color:#991B1B;font-weight:600">${e}</span>`).join(' ');
-    const d=r.created_at?new Date(r.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'—';
-    return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
-        <div>
-          <span style="font-size:13px;font-weight:700;color:var(--navy)">${r.nomCandid}</span>
-          <span style="font-size:10px;color:var(--text3);margin-left:6px">${d}</span>
-          ${r.terrain?`<span style="font-size:10px;color:var(--text3);margin-left:4px">· ${r.terrain}</span>`:''}
-        </div>
-        <span class="badge ${resultColors[r.resultat]||'badge-grey'}">${resultLabels[r.resultat]||r.resultat}</span>
-      </div>
-      ${errHtml?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${errHtml}</div>`:''}
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;font-style:italic;background:var(--bg2);border-radius:6px;padding:8px 10px;max-height:80px;overflow:hidden">"${r.texte.substring(0,200)}${r.texte.length>200?'…':''}"</div>
-      ${r.id.startsWith('fiche-')?'':('<button class="btn btn-sm btn-ghost" style="margin-top:5px;color:var(--c1)" onclick="deleteRetexBrut(\''+r.id+'\')">🗑 Supprimer</button>')}
-    </div>`;
+  container.innerHTML = allRetex.map(r=>{
+    const d = r.date ? new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const col = rColor[r.resultat]||'var(--navy)';
+    const bg = rBg[r.resultat]||'var(--bg2)';
+    const delBtn = r.isSB
+      ? '<button class="btn btn-sm btn-ghost" style="color:var(--c1)" onclick="deleteRetexSB(\''+r.id+'\')">🗑</button>'
+      : '<button class="btn btn-sm btn-ghost" style="color:var(--c1)" onclick="deleteRetexBrut(\''+r.id+'\')">🗑</button>';
+
+    return '<div style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;background:#fff;overflow:hidden;box-shadow:var(--sh)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:'+bg+';border-bottom:1px solid var(--border)">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:13px;font-weight:700;color:var(--navy)">'+r.nom+'</span>'
+          +(r.compagnie?'<span class="badge badge-grey">'+r.compagnie+'</span>':'')
+          +(r.machine?'<span class="badge badge-grey">'+r.machine+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+          +'<span style="font-size:14px;font-weight:900;color:'+col+'">'+r.resultat+'</span>'
+          +'<span style="font-size:10px;color:var(--text3)">'+d+'</span>'
+          +delBtn
+        +'</div>'
+      +'</div>'
+      +(r.erreur?'<div style="padding:8px 12px;background:#FEF2F2"><span style="font-size:10px;font-weight:700;color:#991B1B">⚠ Erreur : </span><span style="font-size:11px">'+r.erreur.substring(0,200)+'</span></div>':'')
+      +(r.utile?'<div style="padding:8px 12px;background:#ECFDF5"><span style="font-size:10px;font-weight:700;color:#065F46">✅ Utile : </span><span style="font-size:11px">'+r.utile.substring(0,200)+'</span></div>':'')
+      +(r.ameliorer?'<div style="padding:8px 12px;background:#FFFBEB"><span style="font-size:10px;font-weight:700;color:#92400E">💡 À améliorer : </span><span style="font-size:11px">'+r.ameliorer.substring(0,200)+'</span></div>':'')
+      +(r.libre?'<div style="padding:8px 12px"><span style="font-size:11px;color:var(--text2);font-style:italic">"'+r.libre.substring(0,300)+(r.libre.length>300?'…':'')+'</span></div>':'')
+    +'</div>';
   }).join('');
 }
 
@@ -3801,59 +3842,268 @@ async function renderRetexList(){
   if(!currentUser) return;
   const container = document.getElementById('retexlist-container');
   const countEl = document.getElementById('retexlist-count');
+  if(!container) return;
   container.innerHTML = '<p style="font-size:11px;color:var(--text3)">Chargement…</p>';
 
-  const { data, error } = await sbClient
+  const {data, error} = await sbClient
     .from('retex')
-    .select('id,candidat_nom,statut,submitted_at,created_at,reponses,token')
+    .select('id,candidat_nom,statut,submitted_at,created_at,reponses')
     .eq('user_id', currentUser.id)
     .eq('candidat_id', currentCandidatId)
     .order('created_at', {ascending: false});
 
-  if(error){ container.innerHTML = '<p style="color:var(--c1)">Erreur : ' + error.message + '</p>'; return; }
+  if(error){ container.innerHTML='<p style="color:var(--c1)">Erreur : '+error.message+'</p>'; return; }
 
-  countEl.textContent = data.length + ' demande(s)';
+  const recus = (data||[]).filter(r=>r.statut!=='en_attente');
+  if(countEl) countEl.textContent = (data||[]).length+' demande(s) · '+recus.length+' reçu(s)';
 
-  if(!data.length){
-    container.innerHTML = '<div class="empty-state" style="padding:30px"><div class="icon">📬</div><h3>Aucun retex</h3><p>Envoie une demande de retex au candidat via le bouton "Demander retex"</p></div>';
+  if(!(data||[]).length){
+    container.innerHTML='<div class="empty-state" style="padding:40px"><div class="icon">📝</div><h3>Aucun retex pour ce candidat</h3><p>Clique sur "📝 Demander retex" pour envoyer un lien au candidat</p></div>';
     return;
   }
 
-  const statusColors = { en_attente: 'badge-gold', recu: 'badge-green', lu: 'badge-blue' };
-  const statusLabels = { en_attente: '⏳ En attente', recu: '✅ Reçu', lu: '👁 Lu' };
+  container.innerHTML = (data||[]).map(r => {
+    const rep = r.reponses || {};
+    const hasData = r.statut !== 'en_attente' && Object.keys(rep).length > 0;
+    const dSent = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—';
+    const _submittedAt = r.submitted_at || r.reponses?.submitted_at;
+    const dRecv = _submittedAt ? new Date(_submittedAt).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : null;
+    const statusBadge = r.statut==='en_attente' ? '<span class="badge badge-gold">⏳ En attente</span>' : r.statut==='recu' ? '<span class="badge badge-green">✅ Reçu</span>' : '<span class="badge badge-blue">👁 Lu</span>';
+    const rColor = rep.resultat==='WIN'?'#059669':rep.resultat==='FAIL'?'#DC2626':'var(--navy)';
+    const rBg = rep.resultat==='WIN'?'#ECFDF5':rep.resultat==='FAIL'?'#FEF2F2':'var(--bg2)';
 
-  container.innerHTML = data.map(r => {
-    const d = r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '—';
-    const sd = r.submitted_at ? new Date(r.submitted_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : null;
-    const rep = r.reponses;
+    let html = '<div style="border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;background:#fff;overflow:hidden;box-shadow:var(--sh-md)">';
 
-    return `<div style="border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;background:#fff">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
-        <div>
-          <span class="badge ${statusColors[r.statut]||'badge-grey'}">${statusLabels[r.statut]||r.statut}</span>
-          <span style="font-size:10px;color:var(--text3);margin-left:8px">Envoyé le ${d}${sd?' · Reçu le '+sd:''}</span>
-        </div>
-        ${r.statut==='recu' ? `<button class="btn btn-sm btn-secondary" onclick="markRetexLu('${r.id}')">Marquer lu</button>` : ''}
-      </div>
-      ${rep ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-        <div style="background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px">
-          <div style="font-weight:700;color:var(--navy)">${rep.compagnie_eval||'—'}</div>
-          <div style="color:var(--text2)">Compagnie évaluée</div>
-        </div>
-        <div style="background:${rep.resultat==='WIN'?'#ECFDF5':rep.resultat==='FAIL'?'#FEF2F2':'var(--bg2)'};border-radius:6px;padding:8px 10px;font-size:11px">
-          <div style="font-weight:700;color:${rep.resultat==='WIN'?'#059669':rep.resultat==='FAIL'?'#DC2626':'var(--navy)'}">${rep.resultat||'—'}</div>
-          <div style="color:var(--text2)">Résultat</div>
-        </div>
-        <div style="background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px">
-          <div style="font-weight:700;color:var(--navy)">${rep.machine_eval||'—'}</div>
-          <div style="color:var(--text2)">Machine éval.</div>
-        </div>
-      </div>
-      ${rep.retex_libre ? `<div style="margin-top:8px;background:var(--bg2);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--text2);font-style:italic;max-height:80px;overflow:hidden">"${rep.retex_libre.substring(0,200)}${rep.retex_libre.length>200?'…':''}"</div>` : ''}
-      ` : '<p style="font-size:11px;color:var(--text3);font-style:italic">En attente de réponse du candidat</p>'}
-    </div>`;
+    // Header bar
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--navy)">';
+    html += '<div style="display:flex;align-items:center;gap:10px">'+statusBadge+'<span style="font-size:11px;color:rgba(255,255,255,.5)">Envoyé le '+dSent+(dRecv?' · Reçu le '+dRecv:'')+'</span></div>';
+    html += '<div style="display:flex;gap:6px">';
+    if(r.statut==='recu') html += '<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="markRetexLu(\'' + r.id + '\')">👁 Marquer lu</button>';
+    if(hasData) html += '<button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="openShareRetexModal(\'' + r.id + '\',' + JSON.stringify(r.reponses||{}) + ')">📤 Partager</button>';
+    html += '<button class="btn btn-sm" style="background:rgba(220,38,38,.2);color:#fca5a5;border:1px solid rgba(220,38,38,.3)" onclick="deleteRetex(\'' + r.id + '\')">🗑</button>';
+    html += '</div></div>';
+
+    if(!hasData){
+      html += '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">En attente de réponse du candidat…</div>';
+    } else {
+      // Result banner
+      if(rep.resultat){
+        html += '<div style="padding:14px 16px;background:'+rBg+';border-bottom:1px solid '+rColor+'44;display:flex;align-items:center;gap:12px">';
+        html += '<div style="font-size:28px;font-weight:900;color:'+rColor+'">'+rep.resultat+'</div>';
+        html += '<div>';
+        if(rep.compagnie_eval) html += '<div style="font-size:14px;font-weight:700;color:var(--navy)">'+rep.compagnie_eval+'</div>';
+        html += '<div style="font-size:11px;color:var(--text2)">'+(rep.type_eval||'')+(rep.machine_eval?' · '+rep.machine_eval:'')+(rep.role_seance?' · '+rep.role_seance:'')+'</div>';
+        html += '</div></div>';
+      }
+
+      // Context chips
+      const chips = [rep.global_difficulte, rep.global_sensation, rep.attitude, rep.langue_seance, rep.nb_candidats].filter(Boolean);
+      if(chips.length){
+        html += '<div style="padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border)">';
+        chips.forEach(c=>{ html += '<span class="badge badge-grey">'+c+'</span>'; });
+        html += '</div>';
+      }
+
+      // Sections
+      html += '<div style="padding:14px 16px">';
+
+      // Show all non-empty text fields
+      const _retexFields = [
+        {k:'sujets_briefing', l:'📋 Briefing sol', bg:'var(--bg2)'},
+        {k:'questions', l:'❓ Questions techniques', bg:'var(--bg2)'},
+        {k:'pts_evalues', l:'🎯 Points évalués', bg:'var(--bg2)'},
+        {k:'difference', l:'⭐ Ce qui fait la différence', bg:'var(--bg2)'},
+        {k:'erreurs', l:'⚠ Erreurs rencontrées', bg:'#FEF2F2', c:'#991B1B'},
+        {k:'erreur_principale', l:'⚠ Erreur principale', bg:'#FEF2F2', c:'#991B1B'},
+        {k:'erreur_gestion', l:'🔄 Comment mieux gérer', bg:'#FEF2F2', c:'#991B1B'},
+        {k:'debrief', l:'👨‍✈️ Débrief examinateur', bg:'#EFF6FF', c:'#1D4ED8'},
+        {k:'axes', l:'📌 Axes d\'amélioration', bg:'#EFF6FF', c:'#1D4ED8'},
+        {k:'ressenti', l:'💭 Ressenti ambiance', bg:'var(--bg2)'},
+        {k:'utile', l:'✅ Coaching le plus utile', bg:'#ECFDF5', c:'#065F46'},
+        {k:'insuf', l:'📉 Insuffisamment préparé', bg:'#FFFBEB', c:'#92400E'},
+        {k:'proche', l:'🎯 Proche du vrai simu', bg:'#ECFDF5', c:'#065F46'},
+        {k:'different', l:'🔀 Différent du coaching', bg:'#FFFBEB', c:'#92400E'},
+        {k:'ameliorer', l:'💡 À améliorer dans le coaching', bg:'#FFFBEB', c:'#92400E'},
+        {k:'ressenti_final', l:'💭 Ressenti final', bg:'var(--bg2)'},
+        {k:'retex_libre', l:'📝 Retex libre', bg:'var(--bg2)', c:'var(--navy)', pre:true},
+      ];
+      _retexFields.forEach(function(f){
+        if(rep[f.k]) html += retexSection_display(f.l, rep[f.k], f.bg, f.c||null, f.pre||false);
+      });
+
+      // If nothing filled show message
+      const _anyField = _retexFields.some(f=>rep[f.k]);
+      if(!_anyField && !rep.sim_data){
+        html += '<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">Le candidat a soumis le formulaire avec peu de détails.</div>';
+      }
+
+      // Timeline sim data — parsed and formatted
+      if(rep.sim_data && rep.sim_data.trim() && rep.sim_data !== ' gravité:0'){
+        const _tlHtml = parseAndRenderTimeline(rep.sim_data);
+        if(_tlHtml){
+          html += '<div style="margin-bottom:10px">'
+            + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px">'
+            + '<svg viewBox="0 0 28 28" fill="none" style="width:18px;height:18px">' + (ICONS['timeline']||'') + '</svg>'
+            + '📊 Timeline de séance</div>'
+            + _tlHtml
+            + '</div>';
+        }
+      }
+
+      // Auto-eval gauges
+      if(rep.auto_eval && Object.keys(rep.auto_eval).length){
+        html += '<div style="margin-top:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:8px">Auto-évaluation par domaine</div>';
+        const domLabels={raw:'📡 Raw Data',ener:'⚡ Énergie',holds:'🔄 Holds',inter:'🎯 Interceptions',crm:'🤝 CRM',monit:'👁 Monitoring',tem:'⚠️ TEM',panne:'🔧 Pannes',gcm:'🧠 Charge mentale',comm:'💬 Communication',sop:'📋 SOP'};
+        Object.entries(rep.auto_eval).forEach(([k,v])=>{
+          if(!v) return;
+          const colors=['#EF4444','#F97316','#EAB308','#84CC16','#10B981'];
+          const pct=(v/5)*100;
+          html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">';
+          html += '<span style="font-size:11px;min-width:160px">'+(domLabels[k]||k)+'</span>';
+          html += '<div style="flex:1;height:6px;background:var(--border);border-radius:100px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+colors[Math.min(v-1,4)]+';border-radius:100px"></div></div>';
+          html += '<span style="font-size:11px;font-weight:700;min-width:28px;color:'+colors[Math.min(v-1,4)]+'">'+v+'/5</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
   }).join('');
+}
+
+
+function getGravityColor(g){
+  const n = parseInt(g)||0;
+  if(n>=8) return {bg:'#FEF0EE',c:'#D93025',label:'Très élevée'};
+  if(n>=6) return {bg:'#FFF3E0',c:'#E65100',label:'Élevée'};
+  if(n>=4) return {bg:'#FFFBEB',c:'#D97706',label:'Modérée'};
+  if(n>=2) return {bg:'#EFF6FF',c:'#1D4ED8',label:'Faible'};
+  return {bg:'var(--bg2)',c:'var(--text2)',label:'Nulle'};
+}
+
+function parseAndRenderTimeline(simData){
+  if(!simData || simData.trim() === ' gravité:0') return '';
+
+  const PHASE_ICONS = {"Roulage": "terrain_pin", "Décollage": "pilotage", "Montée": "pilotage", "Montée initiale": "pilotage", "Tour de piste": "approche_visuelle", "Vent arrière": "approche_visuelle", "Finale": "finale", "Approche": "ils_raw", "Approche ILS": "ils_raw", "Approche RNAV": "ils_raw", "Approche VOR": "vor_interception", "Approche NDB": "vor_interception", "Approche visuelle": "approche_visuelle", "Remise de gaz": "remise_de_gaz", "Go around": "remise_de_gaz", "Atterrissage": "atterrissage", "Panne": "panne_moteur", "Panne moteur": "panne_moteur", "Urgence": "piege_warning", "Holding": "vor_interception", "Attente": "vor_interception", "Navigation": "vor_interception", "Croisière": "croisiere", "Croisiere": "croisiere", "Descente": "descente", "Maniabilité": "maniabilite", "Mania": "maniabilite", "Virages": "maniabilite", "QDM": "qdm_qdr", "QDR": "qdm_qdr", "Raw data": "raw_data", "Briefing": "lecture_instructeur", "Briefing sol": "lecture_instructeur", "LOFT": "conscience_situationnelle", "Autre": "timeline"};
+
+  function getIcon(phaseName){
+    for(const [key, icon] of Object.entries(PHASE_ICONS)){
+      if(phaseName.toLowerCase().includes(key.toLowerCase())) return icon;
+    }
+    return 'timeline';
+  }
+
+  // Split into phase blocks
+  const blocks = simData.split(/(?=Phase \d+)/).filter(b=>b.trim());
+  if(!blocks.length) return '<p style="font-size:11px;color:var(--text3)">Aucune phase enregistrée</p>';
+
+  let html = '<div style="position:relative;padding-left:0">';
+
+  blocks.forEach(function(block, idx){
+    // Parse: Phase N [Type] gravité:G | key: val | key: val
+    const headerMatch = block.match(/Phase (\d+)\s*\[([^\]]+)\]\s*gravité:(\d+)/);
+    if(!headerMatch) return;
+
+    const phaseNum = headerMatch[1];
+    const phaseName = headerMatch[2];
+    const gravity = parseInt(headerMatch[3]);
+    const grav = getGravityColor(gravity);
+    const icon = getIcon(phaseName);
+    const iconSvg = ICONS[icon] ? '<svg viewBox="0 0 28 28" fill="none" style="width:26px;height:26px">' + ICONS[icon] + '</svg>' : '';
+
+    // Parse key:value pairs
+    const rest = block.replace(/Phase \d+\s*\[[^\]]+\]\s*gravité:\d+/, '').trim();
+    const pairs = rest.split(' | ').map(s=>s.trim()).filter(Boolean);
+
+    // Issue badge
+    const issuePair = pairs.find(p => p.match(/^(Résultat|Comment .* terminée?|Type de posé|Issue)/i));
+    let issueBadge = '';
+    if(issuePair){
+      const val = issuePair.split(':').slice(1).join(':').trim();
+      const isGood = /propre|stable|maîtrisé|récupér|réussi/i.test(val);
+      const isBad = /intervention|interrompu|abandon|dégradé|perdu/i.test(val);
+      const badgeBg = isGood?'#ECFDF5':isBad?'#FEF2F2':'#EFF6FF';
+      const badgeC = isGood?'#059669':isBad?'#DC2626':'#1D4ED8';
+      issueBadge = '<span style="background:'+badgeBg+';color:'+badgeC+';border:1px solid '+badgeC+'44;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;margin-left:8px">'+val+'</span>';
+    }
+
+    html += '<div style="display:flex;gap:0;margin-bottom:0">';
+    // Left timeline column
+    html += '<div style="display:flex;flex-direction:column;align-items:center;width:40px;flex-shrink:0">';
+    html += '<div style="width:36px;height:36px;border-radius:10px;background:'+grav.bg+';border:2px solid '+grav.c+'33;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+iconSvg+'</div>';
+    if(idx < blocks.length-1) html += '<div style="width:2px;flex:1;min-height:12px;background:var(--border);margin:3px 0"></div>';
+    html += '</div>';
+
+    // Right content
+    html += '<div style="flex:1;padding:0 0 16px 12px">';
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">';
+    html += '<div style="width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+phaseNum+'</div>';
+    html += '<span style="font-size:13px;font-weight:700;color:var(--navy)">'+phaseName+'</span>';
+    html += issueBadge;
+    if(gravity>0){
+      html += '<span style="margin-left:auto;font-size:10px;font-weight:700;color:'+grav.c+';background:'+grav.bg+';padding:2px 7px;border-radius:10px">Complexité '+gravity+'/10</span>';
+    }
+    html += '</div>';
+
+    // Key-value pairs as pills/lines
+    const skipKeys = /Phase \d+|gravité|Résultat|Comment .* terminée?|Type de posé/i;
+    const filteredPairs = pairs.filter(p=>!skipKeys.test(p));
+
+    if(filteredPairs.length){
+      html += '<div style="background:var(--bg2);border-radius:8px;padding:8px 10px;border:1px solid var(--border)">';
+      filteredPairs.forEach(function(pair){
+        const colonIdx = pair.indexOf(':');
+        if(colonIdx < 0){
+          if(pair.trim()) html += '<div style="font-size:11px;color:var(--text2);margin-bottom:3px">'+pair+'</div>';
+          return;
+        }
+        const key = pair.substring(0,colonIdx).trim();
+        const val = pair.substring(colonIdx+1).trim();
+        if(!val) return;
+        // Highlight important values
+        const isWarn = /saturation|intervention|abandon|perdu|Speed bust|overshoot/i.test(val);
+        const isGood = /propre|stable|maîtrisé|récupér/i.test(val);
+        const valColor = isWarn?'#D93025':isGood?'#059669':'var(--navy)';
+        html += '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;font-size:11px">';
+        html += '<span style="color:var(--text3);min-width:140px;flex-shrink:0;font-size:10px">'+key+'</span>';
+        html += '<span style="color:'+valColor+';font-weight:'+(isWarn||isGood?'600':'400')+'">'+val+'</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function retexSection_display(label, text, bg, color, preWrap){
+  if(!text) return '';
+  return '<div style="margin-bottom:10px;padding:10px 12px;background:'+bg+';border-radius:8px'+( color?';border-left:3px solid '+color:'')+'">'+
+    '<div style="font-size:10px;font-weight:700;color:'+(color||'var(--text2)')+';text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">'+label+'</div>'+
+    '<div style="font-size:12px;color:var(--text);line-height:1.7;'+(preWrap?'white-space:pre-wrap':'')+'">'+text+'</div>'+
+  '</div>';
+}
+
+async function deleteRetex(retexId){
+  if(!confirm('Supprimer ce retex ? Action irréversible.')) return;
+  const {error} = await sbClient.from('retex').delete().eq('id', retexId);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  renderRetexList();
+  // Also refresh analytics if open
+  const anPanel = document.getElementById('an-panel-retex');
+  if(anPanel && anPanel.classList.contains('active')) renderRetexAnalytics();
+}
+
+async function deleteRetexSB(retexId){
+  if(!confirm('Supprimer ce retex ? Action irréversible.')) return;
+  const {error} = await sbClient.from('retex').delete().eq('id', retexId);
+  if(error){ alert('Erreur : ' + error.message); return; }
+  renderRetexAnalytics();
 }
 
 async function markRetexLu(retexId){
@@ -3866,36 +4116,153 @@ async function markRetexLu(retexId){
 // ════════════════════════════════════════════════════
 async function exportRetexCSV(){
   if(!currentUser) return;
-  const { data, error } = await sbClient
+  const {data, error} = await sbClient
     .from('retex')
     .select('*')
     .eq('user_id', currentUser.id)
-    .eq('statut', 'recu');
+    .neq('statut','en_attente');
 
-  if(error||!data.length){ alert('Aucun retex reçu à exporter'); return; }
+  if(error || !data || !data.length){ alert('Aucun retex reçu à exporter'); return; }
 
-  const headers = ['Candidat','Date envoi','Date retex','Compagnie eval','Résultat','Machine','Retex libre','Erreur principale','Coaching utile'];
+  const clean = v => (v||'').toString().replace(/\n/g,' ').replace(/\r/g,'').replace(/"/g,"'");
+
+  const headers = [
+    'Candidat','Statut','Date envoi','Date retex',
+    'Compagnie évaluée','Type évaluation','Résultat','Résultat donné sur place',
+    'Compagnie actuelle','Machine actuelle','Machine évaluation','Rôle',
+    'HDV total','Multi-crew','IFR','Nb candidats','Nb examinateurs','Langue',
+    'Scénario vs retex','Éléments inattendus','Détails inattendus',
+    'Organisation','Attitude examinateurs',
+    'Stress','Charge mentale','Difficulté','Ressenti',
+    'Sujets briefing','Niveau briefing','Durée briefing','Questions techniques',
+    'Difficulté globale','Charge globale','Fatigue','Sensation','Style exo','Comportements',
+    'Points évalués','Ce qui fait la différence',
+    'Erreurs','Erreur principale','Gestion erreur',
+    'Coaching utile','Coaching insuffisant','Proche du vrai','Différent','À améliorer',
+    'Débrief examinateur','Commentaire exo','Axes amélioration','Ressenti final',
+    'Retex libre','Email candidat'
+  ];
+
   const rows = data.map(r => {
     const rep = r.reponses || {};
     return [
-      r.candidat_nom||'',
+      r.candidat_nom||'', r.statut||'',
       r.created_at?new Date(r.created_at).toLocaleDateString('fr-FR'):'',
       r.submitted_at?new Date(r.submitted_at).toLocaleDateString('fr-FR'):'',
-      rep.compagnie_eval||'',
-      rep.resultat||'',
-      rep.machine_eval||'',
-      (rep.retex_libre||'').replace(/\n/g,' ').replace(/"/g,"'"),
-      (rep.erreur_principale||'').replace(/\n/g,' ').replace(/"/g,"'"),
-      (rep.coaching_utile||'').replace(/\n/g,' ').replace(/"/g,"'")
-    ].map(v => '"'+v+'"').join(',');
+      clean(rep.compagnie_eval), clean(rep.type_eval), clean(rep.resultat), clean(rep.resultat_place),
+      clean(rep.compagnie), clean(rep.machine), clean(rep.machine_eval), clean(rep.role_seance),
+      clean(rep.hdv), clean(rep.multicrew), clean(rep.ifr), clean(rep.nb_candidats), clean(rep.nb_examinateurs), clean(rep.langue_seance),
+      clean(rep.scenario_match), clean(rep.elements_inattendus), clean(rep.details_inattendus),
+      clean(rep.organisation), clean(rep.attitude),
+      clean(rep.stress), clean(rep.charge), clean(rep.difficulte), clean(rep.ressenti),
+      clean(rep.sujets_briefing), clean(rep.niveau_briefing), clean(rep.duree_briefing), clean(rep.questions),
+      clean(rep.global_difficulte), clean(rep.global_charge), clean(rep.global_fatigue), clean(rep.global_sensation), clean(rep.global_style_exo),
+      clean(Array.isArray(rep.global_comportements)?rep.global_comportements.join(', '):rep.global_comportements),
+      clean(rep.pts_evalues), clean(rep.difference),
+      clean(rep.erreurs), clean(rep.erreur_principale), clean(rep.erreur_gestion),
+      clean(rep.utile), clean(rep.insuf), clean(rep.proche), clean(rep.different), clean(rep.ameliorer),
+      clean(rep.debrief), clean(rep.exo_comment), clean(rep.axes), clean(rep.ressenti_final),
+      clean(rep.retex_libre), clean(rep.email)
+    ].map(v=>'"'+v+'"').join(',');
   });
 
-  const csv = [headers.join(','), ...rows].join('\n');
+  const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'retex_simprep_' + new Date().toISOString().split('T')[0] + '.csv';
   a.click();
+}
+
+
+// ════════════════════════════════════════════════════
+// SHARE RETEX BY EMAIL
+// ════════════════════════════════════════════════════
+let _shareRetexData = null;
+
+function openShareRetexModal(retexId, reponses){
+  _shareRetexData = {id: retexId, rep: reponses};
+
+  // Build preview
+  const rep = reponses || {};
+  const lines = [];
+  if(rep.compagnie_eval) lines.push('Compagnie : ' + rep.compagnie_eval);
+  if(rep.resultat)       lines.push('Résultat : ' + rep.resultat);
+  if(rep.machine_eval)   lines.push('Machine : ' + rep.machine_eval);
+  if(rep.erreur_principale) lines.push('Erreur principale : ' + rep.erreur_principale.substring(0,120));
+  if(rep.utile)          lines.push('Coaching utile : ' + rep.utile.substring(0,120));
+  if(rep.ameliorer)      lines.push('À améliorer : ' + rep.ameliorer.substring(0,120));
+  if(rep.retex_libre)    lines.push('Retex libre : ' + rep.retex_libre.substring(0,200));
+
+  document.getElementById('share-retex-preview').innerHTML = lines.length
+    ? lines.map(l => '<div style="margin-bottom:4px">• ' + l + '</div>').join('')
+    : '<em>Retex avec peu de contenu textuel</em>';
+
+  document.getElementById('share-email').value = '';
+  document.getElementById('share-message').value = '';
+  document.getElementById('share-retex-status').style.display = 'none';
+
+  openModal('modal-share-retex');
+}
+
+async function sendRetexByEmail(){
+  const to = document.getElementById('share-email').value.trim();
+  if(!to){ alert('Adresse email requise'); return; }
+
+  const rep = (_shareRetexData && _shareRetexData.rep) || {};
+  const customMsg = document.getElementById('share-message').value.trim();
+  const statusEl = document.getElementById('share-retex-status');
+  const db = loadDB();
+  const cand = db.candidats.find(x=>x.id===currentCandidatId);
+
+  // Build summary text
+  const lines = [];
+  if(cand)          lines.push('Candidat : ' + cand.nom);
+  if(rep.compagnie_eval) lines.push('Compagnie évaluée : ' + rep.compagnie_eval);
+  if(rep.resultat)  lines.push('Résultat : ' + rep.resultat);
+  if(rep.machine_eval) lines.push('Machine : ' + rep.machine_eval);
+  if(rep.type_eval) lines.push('Type : ' + rep.type_eval);
+  if(rep.sujets_briefing) lines.push('Briefing : ' + rep.sujets_briefing);
+  if(rep.erreur_principale) lines.push('\nErreur principale :\n' + rep.erreur_principale);
+  if(rep.utile)     lines.push('\nCoaching utile :\n' + rep.utile);
+  if(rep.ameliorer) lines.push('\nÀ améliorer :\n' + rep.ameliorer);
+  if(rep.retex_libre) lines.push('\nRetex libre :\n' + rep.retex_libre);
+
+  const summary = lines.join('\n');
+
+  statusEl.style.display = 'block';
+  statusEl.style.background = '#EFF6FF';
+  statusEl.style.color = '#1D4ED8';
+  statusEl.textContent = 'Envoi en cours…';
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  try {
+    // Create a sharing template — reuse existing template with adapted variables
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: to,
+      candidat_prenom: cand ? cand.nom.split(' ').pop() : 'Candidat',
+      candidat_nom: cand ? cand.nom : '',
+      retex_url: customMsg || 'Retex partagé depuis SIMPREP',
+      instructeur_nom: currentUser?.email?.split('@')[0] || 'Votre instructeur',
+      name: to,
+      email: to,
+      // Extra context in the URL field as message body
+      message: (customMsg ? customMsg + '\n\n' : '') + summary
+    });
+    statusEl.style.background = '#ECFDF5';
+    statusEl.style.color = '#059669';
+    statusEl.textContent = '✅ Email envoyé à ' + to;
+    setTimeout(() => closeModal('modal-share-retex'), 2000);
+  } catch(err) {
+    console.error('EmailJS error:', err);
+    // Fallback: mailto
+    const subject = encodeURIComponent('Retex SIMPREP — ' + (cand ? cand.nom : 'Candidat'));
+    const body = encodeURIComponent((customMsg ? customMsg + '\n\n' : '') + summary);
+    window.open('mailto:' + to + '?subject=' + subject + '&body=' + body);
+    statusEl.style.background = '#FFFBEB';
+    statusEl.style.color = '#D97706';
+    statusEl.textContent = 'EmailJS indisponible — email ouvert dans Mail';
+  }
 }
 
 // ════════════════════════════════════════════════════
