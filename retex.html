@@ -964,12 +964,33 @@ window.addEventListener('load', function() {
           </div>
         </div>
         <div class="subsection">
-          <div class="subsection-title">Attitude des examinateurs</div>
-          <div class="checkbox-grid" id="grp-attitude">
-            <label class="cb-item" onclick="toggleSingle(this,'grp-attitude')"><input type="checkbox" value="Très bienveillants"> <span data-fr="😊 Très bienveillants" data-en="😊 Very supportive">😊 Très bienveillants</span></label>
-            <label class="cb-item" onclick="toggleSingle(this,'grp-attitude')"><input type="checkbox" value="Neutres"> <span data-fr="😐 Neutres" data-en="😐 Neutral">😐 Neutres</span></label>
-            <label class="cb-item" onclick="toggleSingle(this,'grp-attitude')"><input type="checkbox" value="Exigeants"> <span data-fr="🧐 Exigeants" data-en="🧐 Demanding">🧐 Exigeants</span></label>
-            <label class="cb-item" onclick="toggleSingle(this,'grp-attitude')"><input type="checkbox" value="Stressants"> <span data-fr="😤 Stressants" data-en="😤 Stressful">😤 Stressants</span></label>
+          <div class="subsection-title">Comportement observé des examinateurs (multi-select)</div>
+          <div class="q-chips" id="grp-attitude" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Très silencieux</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Très présents verbalement</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Questions fréquentes</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Interruptions fréquentes</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Mise sous pression volontaire</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Attitude bienveillante</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Attitude neutre</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Attitude froide</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Aucun feedback émotionnel</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Pièges volontaires</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Très SOP-oriented</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Très CRM-oriented</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Aide implicite</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-attitude')">Débrief intermédiaire</span>
+          </div>
+        </div>
+        <div class="subsection">
+          <div class="subsection-title">Ressenti émotionnel personnel face aux examinateurs</div>
+          <div class="q-chips" id="grp-ressenti-exo" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">À l'aise</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">Légèrement stressé</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">Stressé</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">Très stressé</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">Déstabilisé</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-ressenti-exo')">Neutre / indifférent</span>
           </div>
         </div>
         <div class="subsection">
@@ -996,17 +1017,7 @@ window.addEventListener('load', function() {
             </div>
             <span class="star-hint" id="sh-charge">—</span>
           </div>
-          <div class="star-block">
-            <span class="star-label" data-fr="🎯 Difficulté globale perçue" data-en="🎯 Overall perceived difficulty">🎯 Difficulté globale perçue</span>
-            <div class="star-row">
-              <input type="radio" name="diff" id="df5" value="5"><label for="df5">★</label>
-              <input type="radio" name="diff" id="df4" value="4"><label for="df4">★</label>
-              <input type="radio" name="diff" id="df3" value="3"><label for="df3">★</label>
-              <input type="radio" name="diff" id="df2" value="2"><label for="df2">★</label>
-              <input type="radio" name="diff" id="df1" value="1"><label for="df1">★</label>
-            </div>
-            <span class="star-hint" id="sh-diff">—</span>
-          </div>
+
         </div>
         <div class="field">
           <label>Commentaires sur le ressenti</label>
@@ -1178,6 +1189,111 @@ window.addEventListener('load', function() {
       </div>
     </div>
 
+    <!-- ══ 4b. CHARGE MENTALE / PM / ÉCARTS ══ -->
+    <div class="section">
+      <div class="section-head navy"><div class="section-num">4b</div> ANALYSE GLOBALE DE SÉANCE</div>
+      <div class="section-body">
+
+        <!-- Source de charge mentale -->
+        <div class="subsection">
+          <div class="subsection-title">Qu'est-ce qui a généré le plus de charge mentale ? (multi-select)</div>
+          <div class="q-chips" id="grp-source-charge" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Temps limité</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Instructions rapides</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Anglais</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Raw data</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Panne</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">PM difficile</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Examinateur</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Briefing complexe</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Multi-tasking</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Gestion énergie</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Navigation</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Automation</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Surprise</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Saturation cognitive</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Peur de l'échec</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-source-charge')">Fatigue</span>
+          </div>
+        </div>
+
+        <!-- Moment clé -->
+        <div class="field" style="margin-top:14px">
+          <label style="font-weight:700;color:var(--navy)">Quel a été le moment clé du simu ?</label>
+          <div style="font-size:11px;color:var(--grey-t);margin-bottom:6px">Le moment où tu as senti que le simu basculait positivement ou négativement.</div>
+          <textarea id="f-moment-cle" placeholder="Décris le moment, ce que tu ressentais, ce qui s'est passé…" style="min-height:80px"></textarea>
+        </div>
+
+        <!-- Nature réelle de l'évaluation -->
+        <div class="subsection" style="margin-top:14px">
+          <div class="subsection-title">Le simu était principalement :</div>
+          <div class="q-chips" id="grp-nature-eval" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Très technique</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Technique mais gérable</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Majoritairement CRM/TEM</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Majoritairement gestion mentale</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Majoritairement SOP</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Majoritairement monitoring</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-nature-eval')">Piège psychologique plus que technique</span>
+          </div>
+        </div>
+
+        <!-- Écarts vs retex -->
+        <div class="subsection" style="margin-top:14px">
+          <div class="subsection-title">Ce qui était différent des retex précédents (multi-select)</div>
+          <div class="q-chips" id="grp-ecarts-retex" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Chronologie différente</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Plus difficile que prévu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Plus simple que prévu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Panne différente</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Focus CRM inattendu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Focus raw data inattendu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Moins technique qu'attendu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Plus psychologique qu'attendu</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Plus de pression humaine</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Beaucoup plus SOP</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Très peu de technique</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">PM difficile</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Examinateurs différents des retex</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-ecarts-retex')">Conforme aux retex</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ 4c. DYNAMIQUE PM / BINÔME ══ -->
+    <div class="section">
+      <div class="section-head blue"><div class="section-num">4c</div> DYNAMIQUE PM / BINÔME</div>
+      <div class="section-body">
+        <div class="subsection">
+          <div class="subsection-title">Ton PM était : (multi-select)</div>
+          <div class="q-chips" id="grp-pm" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Très aidant</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Standard</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Passif</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Désorganisé</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Stressé</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Dominant</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Très bon techniquement</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Mauvais monitoring</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Bonne synergie</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">Mauvaise synergie</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-pm')">N/A — seul candidat</span>
+          </div>
+        </div>
+        <div class="subsection" style="margin-top:12px">
+          <div class="subsection-title">Le PM semblait-il évalué autant que toi ?</div>
+          <div class="q-chips" id="grp-pm-evalue" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleSingleChip(this,'grp-pm-evalue')">Oui</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-pm-evalue')">Non</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-pm-evalue')">Difficile à dire</span>
+            <span class="chip" onclick="toggleSingleChip(this,'grp-pm-evalue')">N/A</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ══ 5. POINTS ÉVALUÉS ══ -->
     <div class="section">
       <div class="section-head blue"><div class="section-num">5</div> POINTS QUI ONT SEMBLÉ ÉVALUÉS</div>
@@ -1323,6 +1439,78 @@ window.addEventListener('load', function() {
 
         <div class="field" style="margin-top:10px"><label>Axes d'amélioration mentionnés</label><textarea id="f-axes" placeholder="Points spécifiques soulevés…"></textarea></div>
         <div class="field" style="margin-top:10px"><label>Ressenti final personnel</label><textarea id="f-ressenti-final" placeholder="Comment tu te sens, ce que tu retiens…"></textarea></div>
+      </div>
+    </div>
+
+
+    <!-- ══ 10b. ANALYSE DÉBRIEF ══ -->
+    <div class="section">
+      <div class="section-head blue"><div class="section-num">10b</div> ANALYSE DU DÉBRIEF EXAMINATEUR</div>
+      <div class="section-body">
+        <div class="subsection">
+          <div class="subsection-title">Le débrief a principalement porté sur : (multi-select)</div>
+          <div class="q-chips" id="grp-debrief-focus" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Technique</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">CRM</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">SOP</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Monitoring</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">TEM</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Gestion énergie</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Attitude</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Communication</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Gestion erreur</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Sécurité</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Leadership</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-debrief-focus')">Rien de particulier</span>
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label>Quelles phrases exactes t'ont marqué ?</label>
+          <textarea id="f-phrases-debrief" placeholder="Cite les formulations exactes qui t'ont frappé, les remarques clés, les formulations surprenantes…" style="min-height:80px"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 10c. AUTO-ANALYSE RÉSULTAT ══ -->
+    <div class="section">
+      <div class="section-head navy"><div class="section-num">10c</div> AUTO-ANALYSE DU RÉSULTAT</div>
+      <div class="section-body">
+        <div class="subsection">
+          <div class="subsection-title">Avec du recul, qu'est-ce qui a le plus influencé ton résultat ? (multi-select)</div>
+          <div class="q-chips" id="grp-influence-resultat" style="flex-wrap:wrap;gap:6px;display:flex">
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Technique</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Stress</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Gestion charge mentale</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">CRM</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Monitoring</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">SOP</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Préparation</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Fatigue</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Communication</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Confiance</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Gestion surprise</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Gestion panne</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Raw data</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">PM</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Examinateur</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Timing</span>
+            <span class="chip" onclick="toggleMultiChip(this,'grp-influence-resultat')">Rien de particulier</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 10d. CONSEIL FINAL ══ -->
+    <div class="section" style="border:2px solid var(--red)">
+      <div class="section-head red"><div class="section-num">★</div> SI TU DEVAIS DONNER UN SEUL CONSEIL</div>
+      <div class="section-body" style="background:linear-gradient(135deg,#FFF5F5,#FFF)">
+        <div style="font-size:13px;color:var(--grey-t);margin-bottom:12px;line-height:1.6">
+          Le conseil le plus précieux que tu pourrais donner au prochain candidat qui se prépare à la même épreuve. Une phrase, une intuition, un apprentissage clé — ce que tu aurais aimé savoir avant.
+        </div>
+        <div class="field">
+          <label style="font-weight:700;color:var(--red)">Ton conseil au prochain candidat *</label>
+          <textarea id="f-conseil-final" placeholder="Sois direct, concret, honnête. Ce que tu as appris, ce qui t'a surpris, ce qui fait vraiment la différence…" style="min-height:120px;border-color:var(--red);font-size:14px" required></textarea>
+        </div>
       </div>
     </div>
 
@@ -1482,6 +1670,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat global', type:'single', is_issue:true,
    opts:['Très propre','Correct avec petites erreurs','Désorganisé','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1499,6 +1703,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Très propre','Quelques hésitations','Désorganisation','Erreur notable','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1510,6 +1730,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Normale','Forte','Extrême']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Très propre','Correct','Quelques hésitations','Désorganisation','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1537,6 +1773,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Issue du décollage', type:'single', is_issue:true,
    opts:['Très propre','Correct','Dégradé mais récupéré','Désorganisé','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1557,6 +1809,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:"Comment la montée s'est-elle terminée ?", type:'single', is_issue:true,
    opts:['Stabilisation complète','Situation récupérée','Toujours en surcharge','Dégradation progressive','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1575,6 +1843,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Maîtrisé','Dégradé mais récupéré','Désorganisé','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1594,6 +1878,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Très propre','Charge élevée maîtrisée','Retard sur la situation','Désorganisation','Saturation']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1611,6 +1911,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Très propre','Correct','Dégradé','Instable','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1627,6 +1943,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat interception', type:'single', is_issue:true,
    opts:['Très propre','Correct','Dégradé','Overshoot','Prise du G/S avant le LOC','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1659,6 +1991,22 @@ const PHASE_QUESTIONS = {
   {id:'issue', label:"Comment s'est terminée l'approche ?", type:'single', is_issue:true,
    opts:['Posé stable','Posé techniquement correct mais dégradé','Posé instable / discutable','Remise de gaz volontaire','Remise de gaz demandée','Approche abandonnée / reset','Intervention examinateur'],
    autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1687,6 +2035,22 @@ const PHASE_QUESTIONS = {
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
    autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1713,6 +2077,22 @@ const PHASE_QUESTIONS = {
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
    autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1732,6 +2112,22 @@ const PHASE_QUESTIONS = {
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Posé stable','Posé dégradé','Remise de gaz volontaire','Remise de gaz demandée','Intervention examinateur'],
    autoAdd:{'Remise de gaz volontaire':'Remise de gaz','Remise de gaz demandée':'Remise de gaz'}},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1756,6 +2152,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:"Comment le GA s'est-il terminé ?", type:'single', is_issue:true,
    opts:['Repositionnement propre','Reprise stable','Toujours en difficulté','Intervention examinateur','Exercice interrompu']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1792,6 +2204,22 @@ const PHASE_QUESTIONS = {
    opts:['Toujours en avance','Globalement stable','Quelques moments subis','Souvent en retard','Saturation complète']},
   {id:'issue', label:"Comment l'événement s'est-il terminé ?", type:'single', is_issue:true,
    opts:['Gestion propre','Gestion correcte mais dégradée','Rattrapé difficilement','Intervention examinateur','Exercice interrompu']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1809,6 +2237,22 @@ const PHASE_QUESTIONS = {
    opts:['Très propre','Stable et correct','Dégradé mais acceptable','Dur','Long','Désaxé','Intervention examinateur']},
   {id:'ressenti_global', label:'Ressenti global de fin de séance', type:'single',
    opts:['Jamais dépassé','Quelques moments subis','Souvent en retard','Saturé','Perte de maîtrise progressive']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ],
 
@@ -1821,6 +2265,22 @@ const PHASE_QUESTIONS = {
    opts:['Très faible','Faible','Modérée','Élevée','Saturation']},
   {id:'issue', label:'Résultat', type:'single', is_issue:true,
    opts:['Maîtrisé','Dégradé','Intervention examinateur']},
+  
+  {id:'signal_implicite', label:'Qu\'est-ce qui semblait réellement évalué pendant cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Pilotage pur','Raw data','Gestion énergie','SOP discipline','CRM','Monitoring','TEM','Gestion charge mentale','Priorisation','Communication PF/PM','Leadership','Anticipation','Capacité d\'adaptation','Gestion surprise','Gestion panne','Prise de décision','Scan instrumental','Conscience situationnelle','Stabilité émotionnelle','Respect procédures','Précision trajectoire','Gestion automatisation','Détection d\'erreur','Récupération d\'erreur']},
+  {id:'erreur_notable', label:'As-tu commis une erreur notable ?', type:'single',
+   opts:['Non','Mineure','Oui significative'],
+   revealIfNotOnlyNon:'type_erreur_notable'},
+  {id:'type_erreur_notable', label:'Type d\'erreur', type:'multi', hidden:true,
+   opts:['Altitude','Vitesse','Cap','Configuration','Callout','SOP','Navigation','Monitoring','CRM','Gestion énergie','Oubli procédure','Mauvaise priorisation','Mauvaise anticipation','Mauvaise communication','Mauvaise stratégie']},
+  {id:'detection_erreur', label:'L\'erreur a été :', type:'single', hidden:true,
+   opts:['Détectée immédiatement par moi','Détectée après quelques secondes','Détectée par le PM','Détectée par examinateur','Jamais détectée']},
+  {id:'recuperation_erreur', label:'Comment la récupération a été perçue ?', type:'single', hidden:true,
+   opts:['Très bonne','Correcte','Laborieuse','Mauvaise','Impossible à évaluer']},
+  {id:'erreur_eliminatoire', label:'Cette erreur semblait-elle éliminatoire ?', type:'single', hidden:true,
+   opts:['Non','Peut-être','Oui clairement']},
+  {id:'pieges_phase', label:'Quels étaient les pièges implicites de cette phase ?', type:'multi', max:3,
+   opts:['Sans objet','Gestion énergie','Anticipation','Monitoring','Saturation mentale','Mauvaise priorisation','Excès de technique','Automation trap','CRM','TEM','Pression temps','Raw data','SOP discipline','Surprise tardive','Changement de stratégie']},
   {id:'comment', label:'Commentaire libre', type:'text'}
 ]
 
@@ -2393,7 +2853,19 @@ function collectData() {
     axes: (document.getElementById('f-axes')||{}).value||'',
     ressenti_final: (document.getElementById('f-ressenti-final')||{}).value||'',
     retex_libre: (document.getElementById('f-libre')||{}).value||'',
-    submitted_at: new Date().toISOString()
+    submitted_at: new Date().toISOString(),
+    source_charge: [...document.querySelectorAll('#grp-source-charge .chip.on')].map(c=>c.textContent.trim()),
+    moment_cle: (document.getElementById('f-moment-cle')||{}).value||'',
+    nature_evaluation: [...document.querySelectorAll('#grp-nature-eval .chip.on')].map(c=>c.textContent.trim()).join(''),
+    ecarts_retex: [...document.querySelectorAll('#grp-ecarts-retex .chip.on')].map(c=>c.textContent.trim()),
+    pm_profil: [...document.querySelectorAll('#grp-pm .chip.on')].map(c=>c.textContent.trim()),
+    pm_evalue: ([...document.querySelectorAll('#grp-pm-evalue .chip.on')].map(c=>c.textContent.trim())[0])||'',
+    ressenti_exo: ([...document.querySelectorAll('#grp-ressenti-exo .chip.on')].map(c=>c.textContent.trim())[0])||'',
+    comportement_exo: [...document.querySelectorAll('#grp-attitude .chip.on')].map(c=>c.textContent.trim()),
+    debrief_focus: [...document.querySelectorAll('#grp-debrief-focus .chip.on')].map(c=>c.textContent.trim()),
+    phrases_debrief: (document.getElementById('f-phrases-debrief')||{}).value||'',
+    influence_resultat: [...document.querySelectorAll('#grp-influence-resultat .chip.on')].map(c=>c.textContent.trim()),
+    conseil_final: (document.getElementById('f-conseil-final')||{}).value||''
   };
 }
 
