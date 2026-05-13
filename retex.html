@@ -16,25 +16,25 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --navy: #0D1B3E;
-  --navy2: #1A2D5A;
-  --red: #C8102E;
-  --blue: #1A4A8A;
-  --blue-l: #2563EB;
-  --grey-l: #F4F6FA;
-  --grey-b: #DDE2EE;
-  --grey-t: #6B7280;
-  --gold: #F59E0B;
-  --green: #10B981;
-  --orange: #F97316;
-  --white: #FFFFFF;
+  --navy:   #0F1923;
+  --navy2:  #1a2937;
+  --red:    #E8001D;
+  --blue:   #1D4ED8;
+  --blue-l: #3B82F6;
+  --grey-l: #F2F1EC;
+  --grey-b: #E2DDD5;
+  --grey-t: #8a8880;
+  --gold:   #D97706;
+  --green:  #059669;
+  --orange: #EA580C;
+  --white:  #FFFFFF;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: linear-gradient(135deg, #E8ECF5 0%, #D4DBF0 100%);
+  background: #F2F1EC;
   color: var(--navy);
   font-size: 13px;
   line-height: 1.5;
@@ -55,7 +55,7 @@ body {
   max-width: 860px; margin: 0 auto;
   background: white; border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(13,27,62,.18);
+  box-shadow: 0 8px 30px rgba(15,25,35,0.08); border: 1px solid #E2DDD5;
 }
 
 /* ── HEADER ── */
@@ -636,7 +636,18 @@ window.addEventListener('load', function() {
 <div class="page">
 
   <!-- ══ HEADER ══ -->
-  <div class="header">
+  <div class="header" style="position:relative;">
+  <!-- Barre rouge top -->
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#E8001D;z-index:10;"></div>
+  <!-- Logo SIMPREP -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding-top:4px">
+    <div style="width:12px;height:12px;background:#E8001D;transform:rotate(45deg);border-radius:2px;flex-shrink:0;"></div>
+    <div>
+      <div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:3px;line-height:1;">SIMPREP</div>
+      <div style="height:2px;background:#E8001D;border-radius:1px;margin-top:3px;"></div>
+    </div>
+    <div style="margin-left:8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:600;padding-top:2px;">Formulaire Retex Candidat</div>
+  </div>
     <div class="header-top">
       <div class="af-badge">✈️</div>
       <div style="flex:1">
@@ -2213,7 +2224,7 @@ function updateGlobalGravity() {
 function updateIssueHeader(brickId, val) {
   var badge = document.getElementById(brickId + '_issue_badge');
   if (!badge) return;
-  var colMap = {'issue-green':'#065F46','issue-amber':'#92400E','issue-red':'#C8102E','issue-dark':'#1A2D5A','issue-danger':'#7F1D1D'};
+  var colMap = {'issue-green':'#065F46','issue-amber':'#92400E','issue-red':'#E8001D','issue-dark':'#1A2D5A','issue-danger':'#7F1D1D'};
   var col = ISSUE_COLORS[val] || '';
   badge.textContent = val;
   badge.className = 'brick-issue-badge';
