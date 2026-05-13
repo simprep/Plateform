@@ -9,8 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <!-- jsPDF pour générer le PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- QR Code -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -325,49 +323,6 @@ body {
   border-top: 3px solid var(--red);
 }
 
-/* ── QR MODAL ── */
-.qr-fab {
-  position: fixed; bottom: 24px; right: 24px;
-  background: var(--navy); color: white; border: none;
-  border-radius: 50px; padding: 12px 22px;
-  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 700;
-  cursor: pointer; box-shadow: 0 4px 20px rgba(13,27,62,.4);
-  transition: all .2s; z-index: 999;
-  display: flex; align-items: center; gap: 8px;
-}
-.qr-fab:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,27,62,.5); }
-
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.6);
-  z-index: 1000; display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity .2s;
-}
-.modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal-box {
-  background: white; border-radius: 20px; padding: 36px;
-  text-align: center; max-width: 360px; width: 90%;
-  box-shadow: 0 20px 60px rgba(0,0,0,.3);
-  transform: scale(.92); transition: transform .2s;
-}
-.modal-overlay.open .modal-box { transform: scale(1); }
-.modal-box h3 { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
-.modal-box p  { font-size: 12px; color: var(--grey-t); margin-bottom: 20px; }
-#qr-container { display: inline-block; padding: 12px; background: white;
-  border: 2px solid var(--grey-b); border-radius: 12px; }
-.modal-url {
-  margin-top: 16px; padding: 10px 14px;
-  background: var(--grey-l); border-radius: 8px;
-  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--navy);
-  word-break: break-all; cursor: pointer; border: 1.5px solid var(--grey-b);
-}
-.modal-url:hover { border-color: var(--blue-l); }
-.modal-close {
-  margin-top: 16px; background: var(--grey-l); border: none;
-  border-radius: 8px; padding: 9px 24px; cursor: pointer;
-  font-family: 'DM Sans', sans-serif; font-weight: 600; color: var(--navy);
-  font-size: 13px;
-}
-
 /* ── RESPONSIVE ── */
 @media (max-width: 600px) {
   .content { padding: 18px; }
@@ -383,7 +338,7 @@ body {
     .page { margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; max-width: 100% !important; }
     .content { padding: 10px 20px !important; }
     .header { padding: 14px 20px !important; }
-    .qr-fab, .submit-section { display: none !important; }
+    .submit-section { display: none !important; }
     .section { break-inside: avoid; page-break-inside: avoid; }
     textarea, input[type=text], input[type=date], input[type=email] {
       border: none !important; background: transparent !important;
@@ -1405,21 +1360,6 @@ window.addEventListener('load', function() {
   </div>
 </div><!-- /page -->
 
-<!-- ══ QR FAB ══ -->
-<button class="qr-fab" onclick="openQR()" data-fr="📱 QR Code" data-en="📱 QR Code">📱 QR Code</button>
-
-<!-- ══ QR MODAL ══ -->
-<div class="modal-overlay" id="qr-modal" onclick="closeQR(event)">
-  <div class="modal-box">
-    <h3 data-fr="📱 Partager le formulaire" data-en="📱 Share the form">📱 Partager le formulaire</h3>
-    <p data-fr="Scannez ce QR code ou copiez le lien pour accéder au retex." data-en="Scan this QR code or copy the link to access the feedback form.">Scannez ce QR code ou copiez le lien pour accéder au retex.</p>
-    <div id="qr-container"></div>
-    <div class="modal-url" id="modal-url" onclick="copyUrl()" title="Cliquer pour copier" data-fr-default="🔗 Cliquer pour copier le lien" data-en-default="🔗 Click to copy the link">🔗 Cliquer pour copier le lien</div>
-    <div data-fr="✅ Hébergez ce fichier sur GitHub Pages, Netlify ou Vercel (gratuit)" data-en="✅ Host this file on GitHub Pages, Netlify or Vercel (free)" style="font-size:11px;color:var(--grey-t);margin-top:8px;">
-      ✅ Hébergez ce fichier sur GitHub Pages, Netlify ou Vercel (gratuit)
-    </div>
-    <button class="modal-close" onclick="closeQR()" data-fr="Fermer" data-en="Close">Fermer</button>
-  </div>
 </div>
 
 <script>
@@ -2586,8 +2526,7 @@ async function submitRetex() {
 }
 
 // ════════════════════════════════════════════════════
-// QR CODE
-// ════════════════════════════════════════════════════
+
 // ════════════════════════════════════════════════
 // LANGUE
 // ════════════════════════════════════════════════
@@ -2968,7 +2907,6 @@ var TRANSLATIONS = {
   'Saturation déjà présente': 'Saturation already present',
   'Saturation immédiate': 'Immediate saturation',
   'Saturé': 'Saturated',
-  'Scannez ce QR code ou copiez le lien pour accéder au retex.': 'Scan this QR code or copy the link to access the feedback form.',
   'Scénario difficile': 'Difficult scenario',
   'Scénario extrême': 'Extreme scenario',
   'Scénario facile': 'Easy scenario',
@@ -3226,20 +3164,8 @@ function applyTranslations() {
   if (btn) btn.innerHTML = currentLang === 'fr' ? '🇬🇧 EN' : '🇫🇷 FR';
 }
 
-var qrGenerated = false;
-function openQR() {
-  var modal = document.getElementById('qr-modal');
-  var url = CONFIG.FORM_URL || window.location.href;
-  document.getElementById('modal-url').textContent = url;
-  if (!qrGenerated && window.QRCode) {
-    new QRCode(document.getElementById('qr-container'), {text:url, width:200, height:200, colorDark:'#0D1B3E', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.H});
-    qrGenerated = true;
-  }
-  modal.classList.add('open');
-}
-function closeQR(e) {
-  if (!e || e.target === document.getElementById('qr-modal')) document.getElementById('qr-modal').classList.remove('open');
-}
+
+
 function copyUrl() {
   var url = CONFIG.FORM_URL || window.location.href;
   navigator.clipboard.writeText(url).then(function() {
