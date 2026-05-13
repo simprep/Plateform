@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">RETEX Évaluation Simulateur</title>
 
-<!-- EmailJS -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <!-- jsPDF pour générer le PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -1537,14 +1535,7 @@ window.addEventListener('load', function() {
     <div class="submit-section">
       <h3 data-fr="📤 Envoyer mon retex" data-en="📤 Send my feedback">📤 Envoyer mon retex</h3>
       <p>Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.</p>
-      <div class="field" style="max-width:320px;margin:0 auto 20px;">
-        <label>Ton adresse email (pour recevoir le récap)</label>
-        <input type="email" id="f-email" placeholder="ton@email.com">
-      </div>
-      <button class="btn-send" id="btn-send" onclick="submitRetex()" data-fr="🚀 Envoyer mon retex" data-en="🚀 Send my feedback">🚀 Envoyer mon retex</button>
-      <div class="progress-wrap" id="progress-wrap">
-        <div class="progress-label" id="progress-label">Envoi en cours…</div>
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      
       </div>
       <div class="status-msg" id="status-msg"></div>
     </div>
@@ -1567,9 +1558,6 @@ const CONFIG = {
   AIRTABLE_TOKEN: '',
   AIRTABLE_BASE_ID: '',
   AIRTABLE_TABLE_NAME: '',
-  EMAILJS_PUBLIC_KEY:  '5ZOYkeHEtkwNj_OyU',
-  EMAILJS_SERVICE_ID:  'service_np9pjk4',
-  EMAILJS_TEMPLATE_ID: 'template_y58x40v',
   COACH_EMAIL:         'simprepparis@gmail.com'
 };
 const isConfigured = true;
@@ -2918,23 +2906,7 @@ async function pushToAirtable(data) {
 // ════════════════════════════════════════════════════
 // EMAIL
 // ════════════════════════════════════════════════════
-async function sendEmail(data) {
-  var body = '';
-  body += 'RETEX — ' + data.nom + ' — ' + data.date + '\n';
-  body += 'Terrain : ' + data.terrain + ' | Résultat : ' + data.resultat + '\n';
-  body += 'Compagnie : ' + data.compagnie + ' | Machine : ' + data.machine + '\n';
-  body += 'HDV : ' + data.hdv + ' | Stress : ' + data.stress + '/5 | Charge : ' + data.charge + '/5\n\n';
-  body += '--- TIMELINE ---\n' + data.sim_data + '\n\n';
-  body += '--- BRIEFING ---\n' + data.questions + '\n\n';
-  body += '--- DÉBRIEF EXAMINATEUR ---\n' + data.debrief + '\n\n';
-  body += '--- RETEX LIBRE ---\n' + data.retex_libre;
-  if (body.length > 45000) body = body.substring(0, 45000) + '\n[...tronqué]';
-  var params = {candidate_name:data.nom||'Candidat', candidate_email:data.email, date:data.date, resultat:data.resultat||'—', summary:body, reply_to:data.email};
-  await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, Object.assign({}, params, {to_email:CONFIG.COACH_EMAIL, reply_to:data.email}));
-  if (data.email) {
-    await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, Object.assign({}, params, {to_email:data.email, summary:'Bonjour ' + (data.nom||'') + ',\n\nTon retex du ' + (data.date||'') + ' a bien été reçu. Merci !\n\nSIMPREP PARIS 🇫🇷', reply_to:CONFIG.COACH_EMAIL}));
-  }
-}
+async function sendEmail(data){ /* disabled — sharing handled by instructor platform */ }
 
 // ════════════════════════════════════════════════════
 // PROGRESS & STATUS
@@ -3429,7 +3401,6 @@ var TRANSLATIONS = {
   'Tentatives de déconcentration aux moments clés': 'Attempts to distract at key moments',
   'Terrain': 'Airfield',
   'Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.': 'Your answers will be saved in the coaching database and a summary will be sent to you by email.',
-  'Ton adresse email (pour recevoir le récap)': 'Your email address (to receive the summary)',
   'Toujours en avance': 'Always ahead',
   'Toujours en difficulté': 'Always struggling',
   'Toujours en surcharge': 'Always overloaded',
@@ -3708,7 +3679,6 @@ function selectPassages(el) {
   document.getElementById('f-passages').value = el.dataset.val;
 }
 
-emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
 </script>
 </body>
 </html>
