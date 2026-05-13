@@ -546,9 +546,9 @@ var _retexRecord = null;
   if(res.error || !res.data) {
     document.getElementById('simprep-error').style.display = 'flex'; return;
   }
-  if(res.data.statut === 'recu') {
+  if(res.data.statut === 'recu' || res.data.statut === 'lu') {
     document.getElementById('simprep-error-msg').textContent = 'Retex déjà envoyé ✅';
-    document.getElementById('simprep-error').querySelector('p').textContent = 'Tu as déjà rempli ce formulaire. Merci !';
+    document.getElementById('simprep-error').querySelector('p').textContent = 'Tu as déjà rempli ce formulaire. Merci pour ton retex !';
     document.getElementById('simprep-error').style.display = 'flex'; return;
   }
   _retexRecord = res.data;
@@ -573,11 +573,19 @@ window.addEventListener('load', function() {
     var btn = document.getElementById('btn-send');
     if(btn && btn.textContent.includes('✅') && _retexToken) {
       var data = typeof collectData === 'function' ? collectData() : {};
+      // Update this token with the data
       await _SB.from('retex').update({
         reponses: data,
         statut: 'recu',
         submitted_at: new Date().toISOString()
       }).eq('token', _retexToken);
+      // Also mark all other pending tokens for same candidat as 'recu'
+      // so reopening any previous link shows "déjà envoyé"
+      if(_retexRecord && _retexRecord.candidat_id){
+        await _SB.from('retex').update({statut:'recu'})
+          .eq('candidat_id', _retexRecord.candidat_id)
+          .eq('statut', 'en_attente');
+      }
       setTimeout(function() {
         document.getElementById('simprep-success').style.display = 'flex';
       }, 1500);
@@ -2974,10 +2982,7 @@ async function submitRetex() {
     if (res.error) throw new Error('Supabase : ' + res.error.message);
     setProgress(70, '✅ Données enregistrées…');
 
-    // 2. Email de confirmation (optionnel — si email renseigné)
-    if (data.email) {
-      try { await sendEmail(data); } catch(e) { console.warn('Email non envoyé:', e); }
-    }
+    // Email de confirmation désactivé — le partage se fait depuis la plateforme instructeur
 
     setProgress(100, '✅ Envoi terminé !');
     showStatus('success', '✅ Retex envoyé avec succès ! Merci ' + (data.nom||'') + ' 🙏');
