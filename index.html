@@ -4017,7 +4017,15 @@ async function renderRetexList(){
       }
 
       // Context chips
-      const chips = [rep.global_difficulte, rep.global_sensation, rep.attitude, rep.langue_seance, rep.nb_candidats].filter(Boolean);
+      // Context chips — all relevant metadata
+      const _chipVals = [
+        rep.global_difficulte, rep.global_sensation, rep.langue_seance, rep.nb_candidats,
+        rep.nature_evaluation, rep.ressenti_exo,
+        ...(Array.isArray(rep.comportement_exo) ? rep.comportement_exo : (rep.comportement_exo?[rep.comportement_exo]:[])),
+        ...(Array.isArray(rep.source_charge) ? rep.source_charge.slice(0,3) : []),
+        ...(Array.isArray(rep.pm_profil) ? rep.pm_profil.slice(0,2) : []),
+      ].filter(Boolean);
+      const chips = _chipVals;
       if(chips.length){
         html += '<div style="padding:10px 16px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--border)">';
         chips.forEach(c=>{ html += '<span class="badge badge-grey">'+c+'</span>'; });
@@ -4029,30 +4037,61 @@ async function renderRetexList(){
 
       // Show all non-empty text fields
       const _retexFields = [
+        // Briefing & contexte
         {k:'sujets_briefing', l:'📋 Briefing sol', bg:'var(--bg2)'},
-        {k:'questions', l:'❓ Questions techniques', bg:'var(--bg2)'},
-        {k:'pts_evalues', l:'🎯 Points évalués', bg:'var(--bg2)'},
+        {k:'questions', l:'❓ Questions techniques posées', bg:'var(--bg2)'},
+        // Points évalués
+        {k:'pts_evalues', l:'🎯 Points qui ont semblé évalués', bg:'var(--bg2)'},
         {k:'difference', l:'⭐ Ce qui fait la différence', bg:'var(--bg2)'},
+        // Charge mentale
+        {k:'moment_cle', l:'⚡ Moment clé du simu', bg:'#EFF6FF', c:'#1D4ED8'},
+        // Erreurs
         {k:'erreurs', l:'⚠ Erreurs rencontrées', bg:'#FEF2F2', c:'#991B1B'},
         {k:'erreur_principale', l:'⚠ Erreur principale', bg:'#FEF2F2', c:'#991B1B'},
         {k:'erreur_gestion', l:'🔄 Comment mieux gérer', bg:'#FEF2F2', c:'#991B1B'},
+        // Débrief
         {k:'debrief', l:'👨‍✈️ Débrief examinateur', bg:'#EFF6FF', c:'#1D4ED8'},
-        {k:'axes', l:'📌 Axes d\'amélioration', bg:'#EFF6FF', c:'#1D4ED8'},
-        {k:'ressenti', l:'💭 Ressenti ambiance', bg:'var(--bg2)'},
+        {k:'phrases_debrief', l:'💬 Phrases exactes marquantes', bg:'#EFF6FF', c:'#1D4ED8'},
+        {k:'axes', l:'📌 Axes d\'amélioration cités', bg:'#EFF6FF', c:'#1D4ED8'},
+        // Coaching
         {k:'utile', l:'✅ Coaching le plus utile', bg:'#ECFDF5', c:'#065F46'},
         {k:'insuf', l:'📉 Insuffisamment préparé', bg:'#FFFBEB', c:'#92400E'},
         {k:'proche', l:'🎯 Proche du vrai simu', bg:'#ECFDF5', c:'#065F46'},
         {k:'different', l:'🔀 Différent du coaching', bg:'#FFFBEB', c:'#92400E'},
         {k:'ameliorer', l:'💡 À améliorer dans le coaching', bg:'#FFFBEB', c:'#92400E'},
+        // Ressenti
+        {k:'ressenti', l:'💭 Ressenti ambiance', bg:'var(--bg2)'},
         {k:'ressenti_final', l:'💭 Ressenti final', bg:'var(--bg2)'},
+        // Analyse résultat
+        {k:'conseil_final', l:'★ Conseil au prochain candidat', bg:'#FFF8F0', c:'#E8001D', pre:true},
+        // Retex libre
         {k:'retex_libre', l:'📝 Retex libre', bg:'var(--bg2)', c:'var(--navy)', pre:true},
+      ];
+      // Helper: display array fields as badges
+      const _arrayFields = [
+        {k:'source_charge', l:'🧠 Source de charge mentale'},
+        {k:'ecarts_retex', l:'🔄 Écarts vs retex précédents'},
+        {k:'debrief_focus', l:'🎯 Focus du débrief'},
+        {k:'influence_resultat', l:'📊 Ce qui a influencé le résultat'},
       ];
       _retexFields.forEach(function(f){
         if(rep[f.k]) html += retexSection_display(f.l, rep[f.k], f.bg, f.c||null, f.pre||false);
       });
 
+      // Display array fields as badge groups
+      _arrayFields.forEach(function(f){
+        const arr = Array.isArray(rep[f.k]) ? rep[f.k] : (rep[f.k]?[rep[f.k]]:[]);
+        if(arr.length){
+          html += '<div style="margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:8px">';
+          html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);margin-bottom:6px">'+f.l+'</div>';
+          html += '<div style="display:flex;flex-wrap:wrap;gap:5px">';
+          arr.forEach(function(v){ html += '<span class="badge badge-grey">'+v+'</span>'; });
+          html += '</div></div>';
+        }
+      });
+
       // If nothing filled show message
-      const _anyField = _retexFields.some(f=>rep[f.k]);
+      const _anyField = _retexFields.some(f=>rep[f.k]) || _arrayFields.some(f=>{const a=rep[f.k]; return Array.isArray(a)?a.length:!!a;});
       if(!_anyField && !rep.sim_data){
         html += '<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px;font-style:italic">Le candidat a soumis le formulaire avec peu de détails.</div>';
       }
@@ -4276,7 +4315,10 @@ async function exportRetexCSV(){
     // Section 9 — Débrief
     'Débrief examinateur','Commentaire examinateur','Résultat donné sur place (9)','Axes amélioration','Ressenti final',
     // Section 10
-    'Retex libre'
+    'Retex libre',
+    'Source charge mentale','Moment clé','Nature évaluation','Écarts vs retex',
+    'Profil PM','PM évalué autant','Ressenti examinateurs','Comportement examinateurs observé',
+    'Focus débrief','Phrases marquantes','Influence résultat','Conseil au prochain'
   ];
 
   const rows = data.map(r => {
@@ -4319,7 +4361,20 @@ async function exportRetexCSV(){
       // Section 9
       clean(rep.debrief), clean(rep.exo_comment), clean(rep.resultat_place), clean(rep.axes), clean(rep.ressenti_final),
       // Section 10
-      clean(rep.retex_libre)
+      clean(rep.retex_libre),
+      // Nouveaux champs analytiques
+      clean(Array.isArray(rep.source_charge)?rep.source_charge.join(', '):rep.source_charge),
+      clean(rep.moment_cle),
+      clean(rep.nature_evaluation),
+      clean(Array.isArray(rep.ecarts_retex)?rep.ecarts_retex.join(', '):rep.ecarts_retex),
+      clean(Array.isArray(rep.pm_profil)?rep.pm_profil.join(', '):rep.pm_profil),
+      clean(rep.pm_evalue),
+      clean(rep.ressenti_exo),
+      clean(Array.isArray(rep.comportement_exo)?rep.comportement_exo.join(', '):rep.comportement_exo),
+      clean(Array.isArray(rep.debrief_focus)?rep.debrief_focus.join(', '):rep.debrief_focus),
+      clean(rep.phrases_debrief),
+      clean(Array.isArray(rep.influence_resultat)?rep.influence_resultat.join(', '):rep.influence_resultat),
+      clean(rep.conseil_final)
     ].map(v=>'"'+String(v)+'"').join(',');
   });
 
@@ -4438,8 +4493,9 @@ async function sendRetexByEmail(){
 
   const isWin = rep.resultat === 'WIN';
   const isFail = rep.resultat === 'FAIL';
-  const resultColor = isWin?'#059669':isFail?'#DC2626':'#1D4ED8';
-  const resultBg = isWin?'#ECFDF5':isFail?'#FEF2F2':'#EFF6FF';
+  const isWaitlist = ["WAITLIST","WAITING LIST","LISTE D'ATTENTE","EN ATTENTE"].includes((rep.resultat||"").toUpperCase());
+  const resultColor = isWin?'#059669':isFail?'#DC2626':isWaitlist?'#D97706':'#1D4ED8';
+  const resultBg = isWin?'#ECFDF5':isFail?'#FEF2F2':isWaitlist?'#FFFBEB':'#EFF6FF';
 
   const dateRetex = rep.submitted_at
     ? new Date(rep.submitted_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})
