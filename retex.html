@@ -1534,7 +1534,7 @@ window.addEventListener('load', function() {
     <!-- ══ SUBMIT ══ -->
     <div class="submit-section">
       <h3 data-fr="📤 Envoyer mon retex" data-en="📤 Send my feedback">📤 Envoyer mon retex</h3>
-      <p>Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.</p>
+      <p>Tes réponses seront enregistrées dans la base de données SIMPREP et ton instructeur sera notifié.</p>
       
       </div>
       <div class="status-msg" id="status-msg"></div>
@@ -2796,7 +2796,6 @@ function collectData() {
     nom: (document.getElementById('f-nom')||{}).value||'',
     date: (document.getElementById('f-date')||{}).value||'',
     terrain: (document.getElementById('f-terrain')||{}).value||'',
-    email: (document.getElementById('f-email')||{}).value||'',
     resultat: (document.getElementById('f-result')||{}).value||'',
     type_eval: getCheckedValues('grp-type').join(', '),
     compagnie_eval: (document.getElementById('f-compagnie-eval')||{}).value||'',
@@ -3393,14 +3392,13 @@ var TRANSLATIONS = {
   'Surprises, écarts…': 'Surprises, deviations…',
   'TCAS / conflit trafic': 'TCAS / traffic conflict',
   'TIMELINE DE SÉANCE': 'SESSION TIMELINE',
-  'TON ADRESSE EMAIL (POUR RECEVOIR LE RÉCAP)': 'YOUR EMAIL ADDRESS (TO RECEIVE THE SUMMARY)',
   'Tardive': 'Late',
   'Taxiway complexe': 'Complex taxiway',
   'Temps limité': 'Limited time',
   'Temps limité / pression': 'Limited time / pressure',
   'Tentatives de déconcentration aux moments clés': 'Attempts to distract at key moments',
   'Terrain': 'Airfield',
-  'Tes réponses seront enregistrées dans la base de données coaching et un récapitulatif te sera envoyé par email.': 'Your answers will be saved in the coaching database and a summary will be sent to you by email.',
+  'Tes réponses seront enregistrées dans la base de données SIMPREP et ton instructeur sera notifié.': 'Your answers will be saved in the SIMPREP database and your instructor will be notified.',
   'Toujours en avance': 'Always ahead',
   'Toujours en difficulté': 'Always struggling',
   'Toujours en surcharge': 'Always overloaded',
