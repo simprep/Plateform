@@ -3677,5 +3677,17 @@ function selectPassages(el) {
 }
 
 </script>
+
+<script>
+// iOS keyboard scroll fix
+(function(){
+  if(!/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
+  document.addEventListener('focusin', function(e){
+    var el = e.target;
+    if(el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') return;
+    setTimeout(function(){ el.scrollIntoView({behavior:'smooth', block:'center'}); }, 350);
+  }, true);
+})();
+</script>
 </body>
 </html>

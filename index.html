@@ -1671,7 +1671,7 @@ function renderSeances(){
               <div class="tl-date">${d}</div>
               ${isSaved?'<span style="font-size:9px;background:#ECFDF5;color:#059669;border:1px solid #A7F3D0;border-radius:10px;padding:1px 6px;font-weight:600">Sauvegardée</span>':''}
             </div>
-            <div class="tl-title">Séance ${seances.length - i} — ${s.terrain||'—'} · ${s.type||'HOP'}</div>
+            <div class="tl-title">Séance ${seances.length - i} — ${s.terrain||'—'} · ${(()=>{const _pid=s.profilId||c.profilId; const _p=_pid?getAllProfils().find(x=>x.id===_pid):null; return _p?_p.compagnie+' — '+_p.nom:(s.type||'—');})()}</div>
             ${s.num?`<div style="font-size:10px;color:var(--text3);margin-top:1px">N° ${s.num}</div>`:''}
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
@@ -2018,7 +2018,7 @@ function renderSeanceDetail(c, s){
   <div class="page-header">
     <div>
       <h1>Débrief — ${c.nom}</h1>
-      <p>${s.date||'—'} · ${s.terrain||'—'} · ${s.type||'HOP'} ${s.num?'· Séance '+s.num:''}</p>
+      <p>${s.date||'—'} · ${s.terrain||'—'} · ${(()=>{const _pid=s.profilId||c.profilId; const _p=_pid?getAllProfils().find(x=>x.id===_pid):null; return _p?_p.compagnie+' — '+_p.nom:(s.type||'—');})()}</p>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary" onclick="openMailModal('${s.id}')">✉ Envoyer</button>
@@ -2209,7 +2209,7 @@ function saveCandidatModal(){
 function openNewSeanceModal(){
   document.getElementById('ms-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('ms-terrain').value = '';
-  document.getElementById('ms-type').value = 'HOP — E-Jet';
+  document.getElementById('ms-type').value = '';
   document.getElementById('ms-num').value = '';
   document.getElementById('ms-focus').value = '';
 
@@ -2221,6 +2221,15 @@ function openNewSeanceModal(){
     const profils = getAllProfils();
     msProfil.innerHTML = '<option value="">— Sélectionner un profil —</option>' +
       profils.map(p=>'<option value="'+p.id+'"'+(c&&c.profilId===p.id?' selected':'')+'>'+p.compagnie+' — '+p.nom+'</option>').join('');
+    msProfil.onchange = function(){
+      const sel = profils.find(p=>p.id===this.value);
+      if(sel) document.getElementById('ms-type').value = sel.compagnie+' — '+sel.nom;
+    };
+    // Pre-fill type from default profil
+    if(c&&c.profilId){
+      const defProfil = profils.find(p=>p.id===c.profilId);
+      if(defProfil) document.getElementById('ms-type').value = defProfil.compagnie+' — '+defProfil.nom;
+    }
   }
 
   openModal('modal-seance');
@@ -2298,7 +2307,7 @@ function buildCoachingSheetHTML(c, s){
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <div>
       <div style="font-size:18px;font-weight:700;color:var(--navy)">${c.nom} — Séance ${s.num||''}</div>
-      <div style="font-size:11px;color:var(--text2)">${s.date||'—'} · ${s.terrain||'—'} · ${s.type||'HOP'}</div>
+      <div style="font-size:11px;color:var(--text2)">${s.date||'—'} · ${s.terrain||'—'} · ${(()=>{const _pid=s.profilId||c.profilId; const _p=_pid?getAllProfils().find(x=>x.id===_pid):null; return _p?_p.compagnie+' — '+_p.nom:(s.type||'—');})()}</div>
     </div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
       <select onchange="changeSeanceProfil(this.value)" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 8px;font-size:11px;font-family:inherit;background:#fff;outline:none;max-width:200px">${profilOptions}</select>
@@ -3762,7 +3771,8 @@ window.addEventListener('beforeprint',()=>{
   if(hdr){
     hdr.style.display='flex';
     document.getElementById('cph-title').textContent='Débrief Coaching — '+(c?c.nom:'—');
-    document.getElementById('cph-meta').textContent=(s?s.date:'—')+' · '+(s?s.terrain||'—':'—')+(s&&s.type?' · '+s.type:'');
+    const _cphP = (() => { const db2=loadDB(); const c2=db2.candidats.find(x=>x.id===currentCandidatId); if(!c2||!s) return s?.type||''; const _pid=s.profilId||c2.profilId; const _p=_pid?getAllProfils().find(x=>x.id===_pid):null; return _p?_p.compagnie+' — '+_p.nom:(s.type||''); })();
+    document.getElementById('cph-meta').textContent=(s?s.date:'—')+' · '+(s?s.terrain||'—':'—')+(_cphP?' · '+_cphP:'');
     document.getElementById('cph-profil').textContent=profil?profil.compagnie+' — '+profil.nom:'';
     if(profil){document.getElementById('cph-logo').textContent=profil.logo||'SP';document.getElementById('cph-logo').style.color=profil.couleur||'#E8001D';}
   }
@@ -4648,6 +4658,28 @@ async function sendRetexByEmail(){
 }
 
 
+
+
+// ── iOS keyboard scroll fix ──
+(function(){
+  if(!/iPad|iPhone|iPod/.test(navigator.userAgent)) return;
+  var lastFocused = null;
+  document.addEventListener('focusin', function(e){
+    var el = e.target;
+    if(el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && el.tagName !== 'SELECT') return;
+    lastFocused = el;
+    // Wait for keyboard to appear then scroll element into view
+    setTimeout(function(){
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 350);
+  }, true);
+  // When keyboard closes, restore scroll position
+  window.addEventListener('resize', function(){
+    if(lastFocused && document.activeElement !== lastFocused){
+      lastFocused = null;
+    }
+  });
+})();
 
 function toggleArchivedSection(){
   const grid = document.getElementById('dash-archived-grid');
