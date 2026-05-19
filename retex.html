@@ -7,6 +7,9 @@
 
 <!-- jsPDF pour générer le PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- EmailJS pour backup instructeur -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script type="text/javascript">emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");</script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -631,6 +634,10 @@ window.addEventListener('load', function() {
       <div class="meta-field">
         <label>Terrain</label>
         <input type="text" id="f-terrain" placeholder="LFPG, LFBO…">
+      </div>
+      <div class="meta-field">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="ton@email.com">
       </div>
     </div>
   </div>
@@ -2793,6 +2800,7 @@ function collectData() {
   var timeline = TL.getData();
   return {
     nom: (document.getElementById('f-nom')||{}).value||'',
+    email: (document.getElementById('f-email')||{}).value||'',
     date: (document.getElementById('f-date')||{}).value||'',
     terrain: (document.getElementById('f-terrain')||{}).value||'',
     resultat: (document.getElementById('f-result')||{}).value||'',
@@ -2904,7 +2912,62 @@ async function pushToAirtable(data) {
 // ════════════════════════════════════════════════════
 // EMAIL
 // ════════════════════════════════════════════════════
-async function sendEmail(data){ /* disabled — sharing handled by instructor platform */ }
+async function sendEmail(data){
+  // ── Backup email vers SIMPREPPARIS@gmail.com via EmailJS ──────────
+  try {
+    if(typeof emailjs !== 'undefined' && emailjs.send) {
+      var subject = '[RETEX] ' + (data.compagnie_eval||'?') + ' · ' + (data.nom||'?') + ' · ' + (data.date||'?') + ' · ' + (data.resultat||'?');
+      var body = [
+        'RETEX SIMPREP — Nouveau retex reçu',
+        '────────────────────────────────────',
+        'Candidat : '   + (data.nom||'—'),
+        'Email    : '   + (data.email||'—'),
+        'Date     : '   + (data.date||'—'),
+        'Terrain  : '   + (data.terrain||'—'),
+        'Compagnie éval : ' + (data.compagnie_eval||'—'),
+        'Type éval : '  + (data.type_eval||'—'),
+        'Résultat  : '  + (data.resultat||'—'),
+        'Machine   : '  + (data.machine||'—') + ' / HDV: ' + (data.hdv||'—'),
+        '────────────────────────────────────',
+        'Organisation  : ' + (data.organisation||'—'),
+        'Attitude exo  : ' + (data.attitude||'—'),
+        'Stress ' + (data.stress||'—') + '/5 · Charge ' + (data.charge||'—') + '/5 · Diff. ' + (data.difficulte||'—') + '/5',
+        '────────────────────────────────────',
+        'Briefing : ' + (data.niveau_briefing||'—') + ' · ' + (data.duree_briefing||'—'),
+        'Questions : ' + (data.questions||'—'),
+        '────────────────────────────────────',
+        'Points évalués : ' + (data.pts_evalues||'—'),
+        'Erreur principale : ' + (data.erreur_principale||'—'),
+        '────────────────────────────────────',
+        'Coaching utile : ' + (data.utile||'—'),
+        'À améliorer    : ' + (data.ameliorer||'—'),
+        '────────────────────────────────────',
+        'RETEX LIBRE :',
+        (data.retex_libre||'—'),
+        '────────────────────────────────────',
+        'Soumis le : ' + (data.submitted_at||'—')
+      ].join('\n');
+
+      await emailjs.send('simprep_service', 'retex_backup', {
+        to_email:    'SIMPREPPARIS@gmail.com',
+        from_name:   'SIMPREP Platform',
+        reply_to:    data.email||'noreply@simprep.fr',
+        subject:     subject,
+        message:     body,
+        candidat_nom: data.nom||'',
+        resultat:    data.resultat||'',
+        compagnie:   data.compagnie_eval||''
+      });
+      console.log('✅ Email backup envoyé à SIMPREPPARIS@gmail.com');
+    } else {
+      // Fallback : console log avec toutes les données
+      console.log('📬 EmailJS absent — retex sauvegardé Supabase uniquement:', data.nom, data.date, data.resultat);
+    }
+  } catch(err) {
+    // Email échoue silencieusement — la sauvegarde Supabase est la source principale
+    console.warn('⚠️ Email backup failed (non bloquant):', err?.text || err?.message || err);
+  }
+}
 
 // ════════════════════════════════════════════════════
 // PROGRESS & STATUS
@@ -2952,7 +3015,9 @@ async function submitRetex() {
     if (res.error) throw new Error('Supabase : ' + res.error.message);
     setProgress(70, '✅ Données enregistrées…');
 
-    // Email de confirmation désactivé — le partage se fait depuis la plateforme instructeur
+    // Email backup vers SIMPREPPARIS@gmail.com (non bloquant)
+    setProgress(85, '📧 Notification instructeur…');
+    await sendEmail(data);
 
     setProgress(100, '✅ Envoi terminé !');
     showStatus('success', '✅ Retex envoyé avec succès ! Merci ' + (data.nom||'') + ' 🙏');
