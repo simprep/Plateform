@@ -1631,6 +1631,8 @@ function saveDB(db){
   db.schemaVersion=APP_SCHEMA_VERSION;
   db.updatedAt=new Date().toISOString();
   localStorage.setItem(DB_KEY,JSON.stringify(db));
+  // Sync automatique vers Supabase à chaque sauvegarde
+  syncToSupabase();
 }
 
 function uuid(){
