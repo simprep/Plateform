@@ -1591,8 +1591,11 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
 // DATA LAYER — localStorage
 // ════════════════════════════════════════════════════
 const DB_KEY = 'simprep_v1';
+// ── OpenAI — remplacer par votre clé API ──────────────────────────────
+// La clé reste côté instructeur uniquement (plateforme non publique)
+var OPENAI_API_KEY = localStorage.getItem('simprep_openai_key') || '';
 const APP_SCHEMA_VERSION = '2.0.0';
-const EMPTY_DB = {schemaVersion:APP_SCHEMA_VERSION, updatedAt:null, candidats:[], profils:[], retex:[], phaseOverrides:{}};
+const EMPTY_DB = {schemaVersion:APP_SCHEMA_VERSION, updatedAt:null, candidats:[], profils:[], retex:[], phaseOverrides:{}, config:{}};
 
 // ════════════════════════════════════════════════════
 // DOM SAFE HELPERS — never crash on missing elements
@@ -1615,6 +1618,7 @@ function loadDB(){
     if(!Array.isArray(parsed.retex))     parsed.retex=[];
     if(!parsed.schemaVersion) parsed.schemaVersion=APP_SCHEMA_VERSION;
     if(!parsed.phaseOverrides) parsed.phaseOverrides = {};
+    if(!parsed.config) parsed.config = {};
     return parsed;
   } catch(e){
     console.warn('[SIMPREP] loadDB corrompu:',e.message);
@@ -2580,7 +2584,8 @@ function buildPreSessionData(candidatId){
   var signals = [];
   byLoad.forEach(function(e){
     (e.lib.signauxFaibles||[]).forEach(function(s){
-      if(signals.length < 6) signals.push({ text: s, phase: e.ph.title });
+      var sLabel = typeof s === 'string' ? s : (s.label || JSON.stringify(s));
+      if(signals.length < 6) signals.push({ text: sLabel, phase: e.ph.title });
     });
   });
 
@@ -2624,10 +2629,25 @@ function buildPreSessionBriefing(c){
   var data = buildPreSessionData(c.id);
   if(!data) return null;
 
+  // ── Aide au briefing IA — lue directement depuis le candidat ──────
+  var iaHtml = '';
+  var iaBrief = c.aide_briefing_ia || null;
+  if(iaBrief){
+    var iaAt = c.aide_briefing_ia_at ? new Date(c.aide_briefing_ia_at).toLocaleDateString('fr-FR') : '';
+    iaHtml += '<div style="background:#fff;border:1.5px solid #0F1923;border-radius:12px;padding:16px 18px;margin-bottom:12px">';
+    iaHtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+    iaHtml += '<span style="font-size:13px">✦</span>';
+    iaHtml += '<span style="font-size:11px;font-weight:800;color:#0F1923;text-transform:uppercase;letter-spacing:.06em">✦ Aide au briefing</span>';
+    if(iaAt) iaHtml += '<span style="font-size:9px;color:#B0A898;margin-left:auto">Généré le '+iaAt+'</span>';
+    iaHtml += '</div>';
+    iaHtml += '<div style="font-size:12px;line-height:1.7;color:#1a1916;white-space:pre-wrap">'+iaBrief+'</div>';
+    iaHtml += '</div>';
+  }
+
   var gc = function(v){ return v>=5?'#DC2626':v>=4?'#E65100':v>=3?'#D97706':v>=2?'#3B82F6':'#10B981'; };
   var pct = function(v){ return Math.round((v/5)*100)+'%'; };
 
-  var html = '';
+  var html = iaHtml;
 
   // ══ CARTE NAVY PRINCIPALE ══
   html += '<div style="background:var(--navy);border-radius:12px;padding:18px 20px;margin-bottom:12px;color:#fff">';
@@ -2750,7 +2770,7 @@ function buildPreSessionBriefing(c){
       html += '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;padding:8px 10px;margin-bottom:5px">';
       html += '<div style="font-size:9px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">';
       html += 'Si '+r.condition+' <span style="color:var(--text3);font-weight:400;text-transform:none;font-size:9px">['+r._phase+']</span></div>';
-      html += '<div style="font-size:11px;color:#064E3B;line-height:1.55">'+r.conseil+'</div>';
+      html += '<div style="font-size:11px;color:#064E3B;line-height:1.55">'+(r.exercice||r.conseil||'—')+'</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -2764,6 +2784,7 @@ function renderPresession(){
   const db = loadDB();
   const c  = db.candidats.find(function(x){ return x.id === currentCandidatId; });
   if(!c) return;
+
   const seances = (c.seances||[]).filter(function(s){ return s.competences; });
   const container = document.getElementById('presession-content');
 
@@ -2816,8 +2837,8 @@ function buildLegacyPreSession(c, seances, last){
             return '<div class="presession-point"><div class="pp-num" style="background:var(--gold)">'+(i+1)+'</div>'+a.text+(a.priorite?' <span style="font-size:9px;opacity:.6">['+a.priorite+']</span>':'')+'</div>';
           }).join('') : '')
     + '</div>'
-    + (last.bilan&&last.bilan.commentaire
-      ? '<div class="card"><div class="card-title"><div class="dot" style="background:var(--text3)"></div>Commentaire instructeur</div><p style="font-size:12px;line-height:1.7;font-style:italic;color:var(--text2)">"'+last.bilan.commentaire+'"</p></div>' : '')
+    + (last.bilan&&(last.bilan.commentaire||last.bilan.commentaire_ia_at)
+      ? '<div class="card"><div class="card-title"><div class="dot" style="background:var(--text3)"></div>Commentaire instructeur'+(last.bilan.commentaire_ia_at?' <span style="font-size:9px;opacity:.5">✦ IA</span>':'')+'</div><p style="font-size:12px;line-height:1.7;font-style:italic;color:var(--text2)">"'+(last.bilan.commentaire||'—')+'"</p></div>' : '')
     + '<div class="card"><div class="card-title"><div class="dot" style="background:var(--c4)"></div>Points solides</div>'
     + (COMPS.filter(function(code){ return (last.competences&&last.competences[code]||0)>=3; }).length
       ? COMPS.filter(function(code){ return (last.competences&&last.competences[code]||0)>=3; })
@@ -4140,8 +4161,16 @@ function buildBilanHTML(cid, sid, s){
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Commentaire libre instructeur</label>
-      <textarea class="form-input" id="cs-commentaire" placeholder="Synthèse qualitative, progression, comportement sous pression…" style="min-height:100px">${b.commentaire||''}</textarea>
+      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Commentaire libre instructeur</span>
+        <button onclick="generateAIBilan('${cid}','${sid}')" id="ai-bilan-btn"
+          style="display:inline-flex;align-items:center;gap:6px;background:#0F1923;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
+          ✦ Générer avec l'IA
+        </button>
+      </label>
+      <div id="ai-bilan-status" style="display:none;font-size:10px;color:#8a8880;margin-bottom:4px;font-style:italic"></div>
+      <textarea class="form-input" id="cs-commentaire" placeholder="Synthèse qualitative, progression, comportement sous pression…" style="min-height:140px">${b.commentaire||''}</textarea>
+      <div style="font-size:10px;color:#B0A898;margin-top:3px">Le texte généré par l'IA est modifiable avant sauvegarde.</div>
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -4164,6 +4193,363 @@ function initCoachingSheet(cid, sid){
 // ════════════════════════════════════════════════════
 // SAVE COACHING SHEET
 // ════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════
+// BILAN IA — OpenAI GPT-4o
+// ════════════════════════════════════════════════════
+
+
+// ════════════════════════════════════════════════════
+// CONFIG — Clé OpenAI depuis Supabase
+// ════════════════════════════════════════════════════
+async function fetchOpenAIKey(){
+  try {
+    const { data, error } = await sbClient
+      .from('config')
+      .select('value')
+      .eq('key', 'openai_api_key')
+      .single();
+    if(error) throw error;
+    if(data && data.value) {
+      OPENAI_API_KEY = data.value;
+      console.log('[SIMPREP] Clé OpenAI chargée depuis Supabase ✅');
+    }
+  } catch(e) {
+    console.warn('[SIMPREP] Clé OpenAI non récupérée:', e.message);
+    // Non bloquant — le bouton IA affichera une erreur si appelé sans clé
+  }
+}
+
+
+// ════════════════════════════════════════════════════
+// PRÉ-SÉANCE IA — génère le brief instructeur
+// ════════════════════════════════════════════════════
+async function generateAIPreseance(cid, sid){
+  if(!OPENAI_API_KEY){ await fetchOpenAIKey(); }
+  if(!OPENAI_API_KEY){ console.warn('Clé OpenAI manquante'); return null; }
+
+  var db = loadDB();
+  var c = db.candidats.find(function(x){ return x.id === cid; });
+  if(!c) return null;
+  var seance = (c.seances||[]).find(function(x){ return x.id === sid; });
+  if(!seance) return null;
+
+  var b = seance.bilan || {};
+  var scores = seance.competences || {};
+  var actions = (seance.actions||[]).filter(function(a){ return a.text && a.text.trim(); });
+
+  // Données préséance (phases, pièges, signaux du profil)
+  var preData = buildPreSessionData(cid);
+
+  // Scores formatés
+  var scoresText = ['MAN','AUT','CNS','PRO','COS','COM','LTE','GES','DEC','MON'].map(function(co){
+    var v = scores[co]; return v ? co+' '+parseFloat(v).toFixed(1) : co+' n/e';
+  }).join(' | ');
+
+  // Pièges observés séance
+  var allPieges = [];
+  var observedTraps = seance.observedTraps || {};
+  Object.keys(observedTraps).forEach(function(phId){
+    (observedTraps[phId]||[]).forEach(function(pg){
+      if(pg.trapLabel||pg.label) allPieges.push('G'+(pg.gravite||'?')+' — '+(pg.trapLabel||pg.label));
+    });
+  });
+
+  // Signaux observés séance
+  var allSignaux = [];
+  var weakSignals = seance.weakSignalsObserved || {};
+  Object.keys(weakSignals).forEach(function(phId){
+    (weakSignals[phId]||[]).forEach(function(sg){ if(sg.label) allSignaux.push(sg.label); });
+  });
+
+  // Pièges critiques du profil suivant
+  var piegesProfil = (preData && preData.piegesCritiques||[]).map(function(p){
+    return 'G'+(p.gravite||'?')+' '+p._phase+' — '+p.label+(p.role?' ['+p.role+']':'');
+  });
+
+  // Signaux profil suivant
+  var signauxProfil = (preData && preData.signauxFaibles||[]).map(function(s){ return s.text+' ['+s.phase+']'; });
+
+  // Objectifs profil suivant
+  var objProfil = (preData && preData.objectifsPrioritaires||[]).map(function(o){ return o.text+' ('+o.phase+')'; });
+
+  // Phases à haute charge
+  var phasesCrit = (preData && preData.phasesCritiques||[]).map(function(p){ return p.title+' D'+p.difficulte+'/W'+p.workload; });
+
+  // Niveau
+  var niveauMap = {'1':'À revoir','2':'Passable','3':'Correct','4':'Solide'};
+
+  var prompt = [
+    'Tu es un instructeur simulateur expert chez SIMPREP, spécialisé en sélections compagnies (A320, E-Jet, B737).',
+    'Génère un brief pré-séance INSTRUCTEUR pour la prochaine séance, basé sur les résultats de la séance précédente.',
+    'Style : direct, opérationnel, comme un instructeur expérimenté prépare sa séance. 3-4 paragraphes. Texte continu, pas de liste.',
+    'Ce brief sera lu par l\'instructeur AVANT la séance pour orienter sa vigilance et son plan d\'évaluation.',
+    '',
+    'CANDIDAT : '+(c.nom||'Inconnu'),
+    'COMPAGNIE CIBLE : '+(seance.compagnie||c.compagnie||'Non renseignée'),
+    '',
+    '== RÉSULTATS SÉANCE PRÉCÉDENTE ==',
+    'Scores : '+scoresText,
+    'Niveau global : '+(niveauMap[b.niveau]||b.niveau||'Non renseigné'),
+    'Points forts : '+(b.positifs||'—'),
+    '',
+    'Pièges observés :',
+    allPieges.length ? allPieges.map(function(p){ return '- '+p; }).join('\n') : '- Aucun piège majeur',
+    '',
+    'Signaux faibles détectés :',
+    allSignaux.length ? allSignaux.map(function(s){ return '- '+s; }).join('\n') : '- Aucun',
+    '',
+    'Axes de travail définis :',
+    actions.length ? actions.map(function(a,i){ return (i+1)+'. '+a.text+(a.priorite?' ('+a.priorite+')':''); }).join('\n') : '- Non définis',
+    '',
+    '== PROFIL DE LA PROCHAINE SÉANCE ==',
+    'Phases à haute charge : '+phasesCrit.join(', '),
+    '',
+    'Pièges critiques à surveiller :',
+    piegesProfil.length ? piegesProfil.map(function(p){ return '- '+p; }).join('\n') : '- Aucun',
+    '',
+    'Signaux faibles à détecter :',
+    signauxProfil.length ? signauxProfil.map(function(s){ return '- '+s; }).join('\n') : '- Aucun',
+    '',
+    'Objectifs prioritaires du profil :',
+    objProfil.length ? objProfil.map(function(o){ return '- '+o; }).join('\n') : '- Non définis',
+    '',
+    'Réponds en 3-4 paragraphes : (1) diagnostic du candidat, (2) points de vigilance prioritaires pour la prochaine séance, (3) comment orienter l\'évaluation et quels moments seront révélateurs, (4) conseil final instructeur.'
+  ].filter(function(l){ return l !== undefined; }).join('\n');
+
+  try {
+    var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer '+OPENAI_API_KEY },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 700,
+        temperature: 0.7,
+        messages: [
+          { role: 'system', content: 'Tu es un instructeur simulateur SIMPREP expert en sélections compagnies. Tu rédiges des briefs pré-séance pour d\'autres instructeurs, en français, toujours opérationnels et personnalisés.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var data = await resp.json();
+    return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content
+      ? data.choices[0].message.content.trim()
+      : null;
+  } catch(e) {
+    console.warn('generateAIPreseance error:', e.message);
+    return null;
+  }
+}
+
+async function generateAIBilan(cid, sid){
+  // ── Vérifier la clé (chargée depuis Supabase au login) ───────────────
+  if(!OPENAI_API_KEY){
+    // Tentative de rechargement si raté au démarrage
+    await fetchOpenAIKey();
+  }
+  if(!OPENAI_API_KEY){
+    showToast('Clé OpenAI non disponible — vérifiez la table config dans Supabase', 'error');
+    if(status){ status.style.display='block'; status.textContent='❌ Clé OpenAI non configurée dans Supabase.'; status.style.color='#DC2626'; }
+    if(btn){ btn.disabled=false; btn.innerHTML='✦ Générer avec l\'IA'; }
+    return;
+  }
+
+  // ── Récupérer les données de la séance ──────────────────────────────
+  var db = loadDB();
+  var candidat = db.candidats.find(function(c){ return c.id === cid; });
+  if(!candidat){ alert('Candidat introuvable'); return; }
+  var seance = (candidat.seances||[]).find(function(s){ return s.id === sid; });
+  if(!seance){ alert('Séance introuvable'); return; }
+
+  var btn = document.getElementById('ai-bilan-btn');
+  var status = document.getElementById('ai-bilan-status');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Génération…'; }
+  if(status){ status.style.display='block'; status.textContent='Connexion à OpenAI…'; }
+
+  // ── Construire le prompt ─────────────────────────────────────────────
+  var b = seance.bilan || {};
+  var scores = seance.competences || {};
+  var actions = (seance.actions||[]).filter(function(a){ return a.text && a.text.trim(); });
+
+  // Scores formatés
+  var scoresText = ['MAN','AUT','CNS','PRO','COS','COM','LTE','GES','DEC','MON'].map(function(c){
+    var v = scores[c];
+    return v ? c+' '+parseFloat(v).toFixed(1) : c+' n/e';
+  }).join(' | ');
+
+  // Pièges depuis observedTraps {phaseId: [{trapLabel, gravite, role}]}
+  var allPieges = [];
+  var observedTraps = seance.observedTraps || {};
+  Object.keys(observedTraps).forEach(function(phId){
+    (observedTraps[phId]||[]).forEach(function(pg){
+      if(pg.trapLabel || pg.label){
+        allPieges.push('G'+(pg.gravite||'?')+' '+phId+' — '+(pg.trapLabel||pg.label));
+      }
+    });
+  });
+
+  // Signaux depuis weakSignalsObserved {phaseId: [{label, observable}]}
+  var allSignaux = [];
+  var weakSignals = seance.weakSignalsObserved || {};
+  Object.keys(weakSignals).forEach(function(phId){
+    (weakSignals[phId]||[]).forEach(function(sg){
+      if(sg.label) allSignaux.push(sg.label+(sg.observable?' — '+sg.observable:''));
+    });
+  });
+
+  // Observations critères depuis phases {phIdx: {'obs-pf-1': 'texte', 'obs-pm-2': 'texte'}}
+  var allObs = [];
+  var phasesData = seance.phases || {};
+  // Récupérer les phases résolues pour avoir titres + labels critères
+  var sessionPhases = [];
+  try { sessionPhases = getPhasesForCandidatSeance(cid, sid); } catch(e2){}
+
+  Object.keys(phasesData).forEach(function(phIdx){
+    var phData = phasesData[phIdx] || {};
+    // Titre de la phase (index → phase résolue)
+    var ph = sessionPhases[parseInt(phIdx)];
+    var phTitle = ph ? (ph.title || ph.titre || 'Phase '+(parseInt(phIdx)+1)) : 'Phase '+(parseInt(phIdx)+1);
+
+    Object.keys(phData).forEach(function(k){
+      // Format: obs-pf-1, obs-pm-3
+      var m = k.match(/^obs-(pf|pm)-(\d+)$/);
+      if(!m) return;
+      var role = m[1];
+      var critIdx = parseInt(m[2]) - 1;
+      var obsText = phData[k];
+      if(!obsText || !obsText.trim() || obsText === '—') return;
+
+      // Trouver le label du critère
+      var critLabel = '';
+      if(ph && ph[role] && ph[role][critIdx]) critLabel = ph[role][critIdx].l || '';
+      var line = phTitle+' ['+role.toUpperCase()+']'+(critLabel?' — '+critLabel:'')+' : '+obsText.trim();
+      allObs.push(line);
+    });
+  });
+
+  // Niveau
+  var niveauMap = {'1':'À revoir','2':'Passable','3':'Correct','4':'Solide'};
+  var niveauLabel = niveauMap[b.niveau] || b.niveau || 'Non renseigné';
+
+  var prompt = [
+    'Tu es un instructeur simulateur expérimenté chez SIMPREP, spécialisé dans la préparation aux sélections compagnies (A320, E-Jet, B737).',
+    'Génère un bilan de débrief constructif, professionnel et personnalisé.',
+    'Style : direct, bienveillant, sans langue de bois. 3-4 paragraphes. Pas de liste à puces. Pas de titre. Du texte continu comme un instructeur l\'écrirait à la main.',
+    '',
+    'CANDIDAT : '+(candidat.nom||'Inconnu'),
+    'COMPAGNIE CIBLE : '+(seance.compagnie||candidat.compagnie||'Non renseignée'),
+    'DATE : '+(seance.date||''),
+    '',
+    'SCORES PAR COMPÉTENCE (sur 4) :',
+    scoresText,
+    '',
+    'PIÈGES OBSERVÉS :',
+    allPieges.length ? allPieges.map(function(p){ return '- '+p; }).join('\n') : '- Aucun piège majeur noté',
+    '',
+    'SIGNAUX FAIBLES :',
+    allSignaux.length ? allSignaux.map(function(s){ return '- '+s; }).join('\n') : '- Aucun signal notable',
+    '',
+    allObs.length ? 'OBSERVATIONS INSTRUCTEUR :\n'+allObs.map(function(o){ return '- '+o; }).join('\n') : '',
+    '',
+    'POINTS FORTS NOTÉS : '+(b.positifs||'Non renseigné'),
+    'NIVEAU GLOBAL : '+niveauLabel,
+    'RECOMMANDATION : '+(b.reco||'Non renseignée'),
+    '',
+    'AXES DE TRAVAIL PRIORITAIRES :',
+    actions.length ? actions.map(function(a,i){ return (i+1)+'. '+a.text+(a.priorite?' ('+a.priorite+')':''); }).join('\n') : 'Non renseignés',
+    '',
+    'Commence directement par le prénom du candidat. Termine sur une note motivante mais réaliste.'
+  ].filter(function(l){ return l !== undefined; }).join('\n');
+
+  // ── Appel API OpenAI ─────────────────────────────────────────────────
+  try {
+    if(status) status.textContent = 'Analyse de la séance en cours…';
+
+    var resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer '+OPENAI_API_KEY
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 600,
+        temperature: 0.75,
+        messages: [
+          { role: 'system', content: 'Tu es un instructeur simulateur SIMPREP expert en sélections compagnies. Tu rédiges des bilans de débrief en français, toujours personnalisés, jamais génériques.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    });
+
+    if(!resp.ok){
+      var err = await resp.json().catch(function(){ return {}; });
+      throw new Error(err.error && err.error.message ? err.error.message : 'Erreur HTTP '+resp.status);
+    }
+
+    var data = await resp.json();
+    var texte = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if(!texte) throw new Error('Réponse vide de l\'API');
+
+    // Insérer dans le textarea
+    var ta = document.getElementById('cs-commentaire');
+    if(ta){ ta.value = texte.trim(); ta.focus(); }
+    if(status){ status.textContent = '⏳ Bilan généré · Génération du brief pré-séance…'; status.style.color='#D97706'; }
+
+    // ── Générer le brief pré-séance en parallèle ─────────────────────
+    var briefPreseance = null;
+    try { briefPreseance = await generateAIPreseance(cid, sid); }
+    catch(e2){ console.warn('Brief préséance:', e2.message); }
+
+    // ── Sauvegarder commentaire + brief dans DB + Supabase ────────────
+    // ── Sauvegarder commentaire sur la séance ──────────────────────────
+    var dbSave = loadDB();
+    var cSave = dbSave.candidats.find(function(x){ return x.id===cid; });
+    if(cSave){
+      var sSave = (cSave.seances||[]).find(function(x){ return x.id===sid; });
+      if(sSave){
+        if(!sSave.bilan) sSave.bilan = {};
+        sSave.bilan.commentaire = texte.trim();
+        sSave.bilan.commentaire_ia_at = new Date().toISOString();
+      }
+      // ── Sauvegarder le brief préséance directement sur le CANDIDAT ──
+      // (champ stable, pas touché par le sync séance)
+      if(briefPreseance){
+        cSave.aide_briefing_ia = briefPreseance;
+        cSave.aide_briefing_ia_at = new Date().toISOString();
+      }
+      saveDB(dbSave);
+    }
+    // Sync Supabase — simple push, pas de pull après
+    try { syncToSupabase(); } catch(e3){ console.warn('Sync:', e3.message); }
+
+    if(status){
+      status.textContent = briefPreseance
+        ? '✅ Bilan généré · Aide au briefing disponible dans Pré-séance.'
+        : '✅ Bilan généré et sauvegardé.';
+      status.style.color = '#059669';
+    }
+    // Rafraîchir préséance — lire depuis localStorage (déjà à jour)
+    // Ne pas faire syncFromSupabase ici pour ne pas écraser
+    if(typeof renderPresession === 'function'){
+      setTimeout(function(){ renderPresession(); }, 100);
+    }
+    showToast(briefPreseance ? 'Bilan + pré-séance IA ✅' : 'Bilan IA ✅');
+
+  } catch(err) {
+    console.error('OpenAI error:', err);
+    if(status){ status.textContent = '❌ Erreur : '+err.message; status.style.color='#DC2626'; }
+    if(err.message && (err.message.includes('401') || err.message.includes('invalid_api_key') || err.message.includes('Incorrect API'))){
+      OPENAI_API_KEY = '';
+      if(status) status.textContent = '❌ Clé API invalide — vérifiez la table config dans Supabase.';
+    }
+    showToast('Erreur API : '+err.message, 'error');
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='✦ Générer avec l\'IA'; }
+  }
+}
+
 function saveCoachingSheet(cid, sid){
   const db = loadDB();
   const c = db.candidats.find(x=>x.id===cid);
@@ -7381,7 +7767,9 @@ async function syncToSupabase(){
     });
     if(error) throw error;
     setSyncStatus('ok');
-    localStorage.setItem('simprep_last_sync',new Date().toISOString());
+    _skipNextRemoteSync = true; // DB locale = source de vérité jusqu'au prochain sync
+    var futureTs = new Date(Date.now() + 10000).toISOString();
+    localStorage.setItem('simprep_last_sync', futureTs);
   }catch(err){console.warn('Sync error:',err);setSyncStatus('error');}
 }
 
@@ -7406,9 +7794,17 @@ async function syncFromSupabase(){
     const localLastSync=localStorage.getItem('simprep_last_sync');
     const localTime=localLastSync?new Date(localLastSync).getTime():0;
     if(remoteTime>localTime){
-      _origSaveDB(data.data);
-      renderDashboard();
-      populateProfilSelects();
+      if(_skipNextRemoteSync){
+        // DB locale plus récente — on ignore le remote
+        _skipNextRemoteSync = false;
+        console.log('[SYNC] Remote ignoré — DB locale prioritaire');
+      } else {
+        _origSaveDB(data.data);
+        renderDashboard();
+        populateProfilSelects();
+      }
+    } else {
+      _skipNextRemoteSync = false;
     }
     setSyncStatus('ok');
     localStorage.setItem('simprep_last_sync',new Date().toISOString());
@@ -8208,6 +8604,9 @@ async function startApp(){
   setLoadingMsg('Connexion Supabase…', 30);
   await syncFromSupabase();
   setLoadingMsg('Données chargées', 90);
+
+  // Récupérer la clé OpenAI depuis Supabase config
+  await fetchOpenAIKey();
 
   setLoadingMsg('Prêt', 100);
   await new Promise(r => setTimeout(r, 200));
