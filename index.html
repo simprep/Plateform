@@ -1594,6 +1594,7 @@ const DB_KEY = 'simprep_v1';
 // ── OpenAI — remplacer par votre clé API ──────────────────────────────
 // La clé reste côté instructeur uniquement (plateforme non publique)
 var OPENAI_API_KEY = localStorage.getItem('simprep_openai_key') || '';
+var _skipNextRemoteSync = false;
 const APP_SCHEMA_VERSION = '2.0.0';
 const EMPTY_DB = {schemaVersion:APP_SCHEMA_VERSION, updatedAt:null, candidats:[], profils:[], retex:[], phaseOverrides:{}, config:{}};
 
