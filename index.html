@@ -4146,10 +4146,10 @@ function buildBilanHTML(cid, sid, s){
         <label class="form-label">Niveau global estimé</label>
         <select class="form-input" id="cs-niveau">
           <option value="">— Sélectionner —</option>
-          <option value="1" '+((b.niveau||'').startsWith('1')?'selected':'')+'>1 — À revoir</option>
-          <option value="2" '+((b.niveau||'').startsWith('2')?'selected':'')+'>2 — Passable</option>
-          <option value="3" '+((b.niveau||'').startsWith('3')?'selected':'')+'>3 — Correct</option>
-          <option value="4" '+((b.niveau||'').startsWith('4')?'selected':'')+'>4 — Solide</option>
+          <option value="1" ${(b.niveau||'').startsWith('1')?'selected':''}>1 — À revoir</option>
+          <option value="2" ${(b.niveau||'').startsWith('2')?'selected':''}>2 — Passable</option>
+          <option value="3" ${(b.niveau||'').startsWith('3')?'selected':''}>3 — Correct</option>
+          <option value="4" ${(b.niveau||'').startsWith('4')?'selected':''}>4 — Solide</option>
         </select>
       </div>
       <div class="form-group">
@@ -4165,12 +4165,8 @@ function buildBilanHTML(cid, sid, s){
     </div>
     <div class="form-group">
       <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
-        <span>Commentaire libre instructeur</span>
+        <span>Bilan IA</span>
         <div style="display:inline-flex;align-items:center;gap:6px">
-          <select id="ai-type-select" style="border:1.5px solid #E2DDD5;border-radius:5px;padding:4px 8px;font-size:10px;font-family:inherit;background:#fff;cursor:pointer;color:#0F1923">
-            <option value="candidat">👤 Débrief candidat</option>
-            <option value="instructeur">📋 Note instructeur</option>
-          </select>
           <select id="ai-mode-select" style="border:1.5px solid #E2DDD5;border-radius:5px;padding:4px 8px;font-size:10px;font-family:inherit;background:#fff;cursor:pointer;color:#0F1923">
             <option value="standard">📝 Standard</option>
             <option value="synthetique">⚡ Synthétique</option>
@@ -4181,38 +4177,46 @@ function buildBilanHTML(cid, sid, s){
           </select>
           <button onclick="generateAIBilan('${cid}','${sid}')" id="ai-bilan-btn"
             style="display:inline-flex;align-items:center;gap:6px;background:#0F1923;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">
-            ✦ Générer
+            ✦ Générer les deux
           </button>
         </div>
       </label>
-      <div id="ai-bilan-status" style="display:none;font-size:10px;color:#8a8880;margin-bottom:4px;font-style:italic"></div>
-      <textarea class="form-input" id="cs-commentaire" placeholder="Synthèse qualitative, progression, comportement sous pression…" style="min-height:140px">${b.commentaire||''}</textarea>
-      <div style="font-size:10px;color:#B0A898;margin-top:3px">Le texte généré par l'IA est modifiable avant sauvegarde.</div>
+      <div id="ai-bilan-status" style="display:none;font-size:10px;color:#8a8880;margin-bottom:6px;font-style:italic"></div>
     </div>
-    <!-- ── Champs dédiés débrief candidat / note instructeur ── -->
-    <div class="form-group" id='ai-champs-dedies-'+sid+'"'>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label class="form-label" style="font-size:10px">👤 Débrief candidat (IA)</label>
-          <textarea class="form-input" id='cs-ai-candidat-'+sid+'"' rows="4" placeholder="Généré automatiquement…" style="font-size:11px;background:#F0FDF4;border-color:#BBF7D0">${s.aiDebriefCandidat||''}</textarea>
-        </div>
-        <div>
-          <label class="form-label" style="font-size:10px">📋 Note instructeur (IA)</label>
-          <textarea class="form-input" id='cs-ai-instructeur-'+sid+'"' rows="4" placeholder="Généré automatiquement…" style="font-size:11px;background:#FFF9EA;border-color:#FDE68A">${s.aiNoteInstructeur||''}</textarea>
-        </div>
-      </div>
+
+    <!-- ── Débrief candidat ── -->
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:6px">
+        <span>👤 Débrief candidat</span>
+        <span style="font-size:9px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:4px;padding:1px 6px;color:#059669;font-weight:600">Imprimable · PDF</span>
+      </label>
+      <textarea class="form-input" id="cs-ai-candidat-${sid}"
+        placeholder="Débrief pédagogique destiné au candidat — généré ou saisi manuellement…"
+        style="min-height:160px;background:#FAFFFE;border-color:#BBF7D0"
+      >${b.aiDebriefCandidat||(b.commentaire||'')}</textarea>
     </div>
+
+    <!-- ── Note instructeur ── -->
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;gap:6px">
+        <span>📋 Note instructeur</span>
+        <span style="font-size:9px;background:#FFF9EA;border:1px solid #FDE68A;border-radius:4px;padding:1px 6px;color:#D97706;font-weight:600">Privée · Non imprimée</span>
+      </label>
+      <textarea class="form-input" id="cs-ai-instructeur-${sid}"
+        placeholder="Note analytique interne — non partagée au candidat…"
+        style="min-height:120px;background:#FFFDF5;border-color:#FDE68A"
+      >${b.aiNoteInstructeur||''}</textarea>
+    </div>
+
     <!-- ── Historique IA ── -->
     <div class="form-group">
       <label class="form-label" style="font-size:10px;display:flex;align-items:center;gap:6px">
         <span>🕐 Historique IA</span>
-        <span id='ai-histo-count-'+sid+'"' style="background:#E8E5DF;border-radius:4px;padding:0 6px;font-size:8.5px;color:#8a8880">'+((s.aiGenerations||[]).length)+' génération(s)</span>
+        <span id="ai-histo-count-${sid}" style="background:#E8E5DF;border-radius:4px;padding:0 6px;font-size:8.5px;color:#8a8880">${(b.aiGenerations||[]).length} génération(s)</span>
       </label>
-      <div id='ai-historique-bloc-'+sid+'"' style="min-height:24px">
+      <div id="ai-historique-bloc-${sid}" style="min-height:24px">
         <div style="font-size:10px;color:#B0A898;font-style:italic">Aucune génération pour cette séance.</div>
       </div>
-    </div>
-    <div style="display:none"><!-- dummy close --></div>
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -4675,9 +4679,97 @@ async function _runGenerateAIBilan(cid, sid, mode, outputType){
 
 // ── generateAIBilan — point d'entrée ─────────────────────────────────
 async function generateAIBilan(cid, sid){
-  var mode       = (document.getElementById('ai-mode-select')||{}).value || 'standard';
-  var outputType = (document.getElementById('ai-type-select')||{}).value || 'candidat';
-  await _runGenerateAIBilan(cid, sid, mode, outputType);
+  var mode   = (document.getElementById('ai-mode-select')||{}).value || 'standard';
+  var btn    = document.getElementById('ai-bilan-btn');
+  var status = document.getElementById('ai-bilan-status');
+
+  if(!OPENAI_API_KEY){ await fetchOpenAIKey(); }
+  if(!OPENAI_API_KEY){
+    showToast('Clé OpenAI non disponible', 'error');
+    return;
+  }
+
+  var db = loadDB();
+  var candidat = db.candidats.find(function(c){ return c.id===cid; });
+  if(!candidat){ alert('Candidat introuvable'); return; }
+  var seance = (candidat.seances||[]).find(function(s){ return s.id===sid; });
+  if(!seance){ alert('Séance introuvable'); return; }
+
+  // Vérifier si des textes existent déjà
+  var candEl = document.getElementById('cs-ai-candidat-'+sid);
+  var instEl = document.getElementById('cs-ai-instructeur-'+sid);
+  if((candEl&&candEl.value.trim()) || (instEl&&instEl.value.trim())){
+    if(!confirm('Un débrief ou une note existe déjà. Remplacer les deux textes IA ?')) return;
+  }
+
+  if(btn){ btn.disabled=true; btn.innerHTML='⏳…'; }
+  if(status){ status.style.display='block'; status.textContent='Génération du débrief candidat…'; }
+
+  var ctx = buildSeanceContext(seance, candidat, cid, sid);
+  var cfg = (AI_MODES[mode]||AI_MODES.standard);
+
+  async function callAPI(promptObj, maxTok){
+    var resp = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+OPENAI_API_KEY},
+      body:JSON.stringify({model:'gpt-4o',max_tokens:maxTok,temperature:cfg.temperature,
+        messages:[{role:'system',content:promptObj.system},{role:'user',content:promptObj.user}]})
+    });
+    if(!resp.ok){ var e=await resp.json().catch(function(){return{};}); throw new Error(e.error&&e.error.message?e.error.message:'HTTP '+resp.status); }
+    var d=await resp.json();
+    return d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content
+      ? d.choices[0].message.content.trim() : '';
+  }
+
+  try {
+    // 1. Débrief candidat
+    var pCand = buildAIPrompt(ctx, mode, 'candidat');
+    var textCand = await callAPI(pCand, cfg.max_tokens||600);
+
+    if(status) status.textContent = 'Génération de la note instructeur…';
+
+    // 2. Note instructeur
+    var pInst = buildAIPrompt(ctx, mode, 'instructeur');
+    var textInst = await callAPI(pInst, Math.max(cfg.max_tokens||600, 700));
+
+    // 3. Remplir les textareas immédiatement
+    if(candEl) candEl.value = textCand;
+    if(instEl) instEl.value = textInst;
+
+    // 4. Sauvegarder en DB
+    var db2 = loadDB();
+    var c2  = db2.candidats.find(function(x){ return x.id===cid; });
+    if(c2){
+      var s2 = (c2.seances||[]).find(function(x){ return x.id===sid; });
+      if(s2){
+        s2.aiDebriefCandidat = textCand;
+        s2.aiNoteInstructeur = textInst;
+        // Compatibilité legacy PDF
+        if(!s2.bilan) s2.bilan = {};
+        s2.bilan.commentaire = textCand;
+        // Historique — deux entrées
+        if(!Array.isArray(s2.aiGenerations)) s2.aiGenerations = [];
+        var now = new Date().toISOString();
+        var pv  = typeof AI_PROMPT_VERSION!=='undefined' ? AI_PROMPT_VERSION : '1.0.0';
+        s2.aiGenerations.push({id:_genId(),createdAt:now,promptVersion:pv,mode:mode,type:'candidat',generatedText:textCand,accepted:true,insertedInMainComment:true});
+        s2.aiGenerations.push({id:_genId(),createdAt:now,promptVersion:pv,mode:mode,type:'instructeur',generatedText:textInst,accepted:true,insertedInMainComment:false});
+        saveDB(db2);
+      }
+    }
+
+    // 5. Rafraîchir historique
+    _renderAIHistorique(cid, sid);
+    if(status){ status.textContent='✅ Débrief + note générés — modifiables avant sauvegarde.'; status.style.color='#059669'; }
+    showToast('✅ Débrief candidat + note instructeur générés');
+
+  } catch(err){
+    console.error('OpenAI:', err);
+    if(status){ status.style.display='block'; status.textContent='❌ '+err.message; status.style.color='#DC2626'; }
+    if(err.message&&(err.message.includes('401')||err.message.includes('invalid'))){ OPENAI_API_KEY=''; }
+    showToast('Erreur API : '+err.message, 'error');
+  } finally {
+    if(btn){ btn.disabled=false; btn.innerHTML='✦ Générer les deux'; }
+  }
 }
 
 // ── Bloc historique IA ────────────────────────────────────────────────
@@ -4890,11 +4982,15 @@ function saveCoachingSheet(cid, sid){
     actions.push({text,priorite:prio});
   }
   s.actions = actions;
-  // Sauvegarder les champs IA dédiés (IDs uniques par sid)
+  // Sauvegarder champs IA (IDs uniques par sid)
   var candTa = document.getElementById('cs-ai-candidat-'+sid);
   var instTa = document.getElementById('cs-ai-instructeur-'+sid);
-  if(candTa) s.aiDebriefCandidat = candTa.value || s.aiDebriefCandidat || '';
-  if(instTa) s.aiNoteInstructeur = instTa.value || s.aiNoteInstructeur || '';
+  var candVal = candTa ? candTa.value.trim() : (s.aiDebriefCandidat||'');
+  var instVal = instTa ? instTa.value.trim() : (s.aiNoteInstructeur||'');
+  if(candVal) s.aiDebriefCandidat = candVal;
+  if(instVal) s.aiNoteInstructeur = instVal;
+  // Legacy PDF : commentaire = débrief candidat
+  if(candVal) s.bilan.commentaire = candVal;
   s.bilan = {
     positifs: document.getElementById('cs-positifs')?.value||'',
     niveau: document.getElementById('cs-niveau')?.value||'',
