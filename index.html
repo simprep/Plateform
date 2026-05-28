@@ -2183,9 +2183,9 @@ function showView(id, btn){
   if(id==='analytics') renderAnalytics();
   if(id==='calendrier') renderCalendar();
   if(id==='profils'){ renderProfils(); populateProfilSelects(); }
-  // Charger les éditions Supabase à l'ouverture de l'onglet Briefing AF A320
+  // Recharger les éditions à l'ouverture de l'onglet Briefing AF A320
   if(id==='briefing-af' && typeof briefingAfLoadEditsFromSupabase === 'function'){
-    setTimeout(briefingAfLoadEditsFromSupabase, 300);
+    briefingAfLoadEditsFromSupabase();
   }
 }
 
@@ -8625,7 +8625,7 @@ const SB_URL = "https://erzinefnmcyxhtmkimmt.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyemluZWZubWN5eGh0bWtpbW10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1ODYxNjQsImV4cCI6MjA5NDE2MjE2NH0.nLW6Cy3vWjfSSOXlrrMalwfyXg7zbLTM5sRR8D3HUCU";
 const sbClient = supabase.createClient(SB_URL, SB_KEY);
 
-let currentUser = null; // set after login
+var currentUser = null; // set after login
 
 function getSupabaseConfig(){
   return {url: SB_URL, key: SB_KEY, instructorId: currentUser ? currentUser.id : 'anon'};
@@ -9527,6 +9527,11 @@ async function startApp(){
   if(loadDB().candidats.length === 0){
     setText('dashboard-subtitle', 'Aucun candidat · Cliquez sur "+ Nouveau candidat" pour commencer');
   }
+
+  // Charger les éditions Briefing AF A320 une fois l'auth confirmée
+  if(typeof briefingAfLoadEditsFromSupabase === 'function'){
+    briefingAfLoadEditsFromSupabase();
+  }
 }
 
 // ══ BOOT ══
@@ -9640,9 +9645,9 @@ window.briefingAfToggleEditMode = briefingAfToggleEditMode;
 
 // ── Charger les éditions depuis Supabase ──
 async function briefingAfLoadEditsFromSupabase() {
-  if (typeof sbClient === 'undefined' || !window.currentUser) return;
+  if (typeof sbClient === 'undefined' || !currentUser) return;
   try {
-    var userId = window.currentUser.id;
+    var userId = currentUser.id;
     var result = await sbClient
       .from('briefing_af_content_edits')
       .select('block_key, html_content')
@@ -9662,11 +9667,11 @@ window.briefingAfLoadEditsFromSupabase = briefingAfLoadEditsFromSupabase;
 
 // ── Sauvegarder les éditions dans Supabase ──
 async function briefingAfSaveEditsToSupabase() {
-  if (typeof sbClient === 'undefined' || !window.currentUser) {
+  if (typeof sbClient === 'undefined' || !currentUser) {
     console.warn('[BAF] Sauvegarde ignorée : Supabase non disponible ou utilisateur non connecté.');
     return;
   }
-  var userId = window.currentUser.id;
+  var userId = currentUser.id;
   var rows = [];
   var allEditables = document.querySelectorAll('#view-briefing-af [data-baf-editable="true"], #baf-method-steps [data-baf-editable="true"]');
   allEditables.forEach(function (el) {
@@ -9716,12 +9721,12 @@ async function briefingAfResetEditsFromSupabase() {
   // 3. Vider le cache des éditions chargées
   briefingAfLoadedEdits = {};
   // 4. Supprimer dans Supabase
-  if (typeof sbClient !== 'undefined' && window.currentUser) {
+  if (typeof sbClient !== 'undefined' && currentUser) {
     try {
       var result = await sbClient
         .from('briefing_af_content_edits')
         .delete()
-        .eq('instructor_id', window.currentUser.id);
+        .eq('instructor_id', currentUser.id);
       if (result.error) {
         console.error('[BAF] Reset error:', result.error.message);
         alert('Contenu restauré localement, mais erreur lors de la suppression Supabase : ' + result.error.message);
@@ -9823,8 +9828,8 @@ function briefingAfApplyBafAttrsToSteps() {
 
 // ── Init ──
 function briefingAfEditModeInit() {
-  // Charger les éditions Supabase (si connecté)
-  briefingAfLoadEditsFromSupabase();
+  // Le chargement Supabase est géré par startApp() après auth confirmée
+  // Rien à faire ici au boot
 }
 
 // Exposer pour appel externe depuis showView si souhaité
