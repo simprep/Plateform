@@ -858,6 +858,180 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
 .cs-obj-btn.active-par { background:#FFFBEB;border-color:#FDE68A;color:#92400E }
 .cs-obj-btn.active-non { background:#FEF2F2;border-color:#FECACA;color:#991B1B }
 .cs-comp-badge { display:inline-flex;align-items:center;gap:3px;background:var(--navy);color:#fff;border-radius:4px;padding:2px 7px;font-size:9px;font-weight:700;margin:0 2px 2px 0 }
+
+/* ══════════════════════════════════════════
+   BRIEFING AF A320 — CSS ISOLÉ
+   Toutes les classes préfixées .briefing-af-
+   Aucune variable CSS globale ajoutée.
+   N'affecte aucune autre vue SIMPREP.
+══════════════════════════════════════════ */
+
+/* ── Sous-onglets internes ── */
+.briefing-af-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;}
+.briefing-af-tabs::-webkit-scrollbar{display:none;}
+.briefing-af-tab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--text2);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;margin-bottom:-1px;}
+.briefing-af-tab:hover{color:var(--navy);}
+.briefing-af-tab.active{color:var(--navy);border-bottom-color:var(--hop);font-weight:700;}
+.briefing-af-panel{display:none;}
+.briefing-af-panel.active{display:block;}
+
+/* ── Bouton impression ── */
+.briefing-af-print-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r-sm);font-size:11px;font-weight:600;border:1px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;transition:all .15s;margin-left:auto;}
+.briefing-af-print-btn:hover{background:var(--bg2);color:var(--navy);}
+.briefing-af-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.briefing-af-panel-title{font-size:14px;font-weight:700;color:var(--navy);}
+
+/* ── Lignes info ── */
+.briefing-af-info-row{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.briefing-af-info-row:last-child{border-bottom:none;}
+.briefing-af-info-icon{font-size:14px;color:var(--text3);flex-shrink:0;margin-top:1px;}
+.briefing-af-info-label{font-weight:600;color:var(--text);min-width:110px;flex-shrink:0;}
+.briefing-af-info-val{color:var(--text2);}
+
+/* ── Grille 2 colonnes ── */
+.briefing-af-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:640px){.briefing-af-grid2{grid-template-columns:1fr;}}
+
+/* ── Boîtes colorées ── */
+.briefing-af-info-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--r-sm);padding:9px 12px;font-size:12px;color:#1E40AF;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
+.briefing-af-warning-box{background:#FFF7ED;border:1px solid #FED7AA;border-radius:var(--r-sm);padding:9px 12px;font-size:12px;color:#92400E;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
+.briefing-af-success-box{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:var(--r-sm);padding:9px 12px;font-size:12px;color:#065F46;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;line-height:1.5;}
+.briefing-af-piege-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-sm);padding:8px 11px;font-size:11px;color:#7F1D1D;display:flex;gap:8px;align-items:flex-start;margin-top:8px;line-height:1.5;}
+.briefing-af-tip-box{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:var(--r-sm);padding:8px 11px;font-size:11px;color:#064E3B;display:flex;gap:8px;align-items:flex-start;margin-top:8px;line-height:1.5;}
+.briefing-af-pm-box{background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--r-sm);padding:8px 11px;font-size:11px;color:#78350F;display:flex;gap:8px;align-items:flex-start;margin-top:8px;line-height:1.5;}
+.briefing-af-calc-box{background:#EDE9FE;border:1px solid #C4B5FD;border-radius:var(--r-sm);padding:10px 12px;font-size:11px;color:#4C1D95;margin-top:8px;line-height:1.5;}
+.briefing-af-calc-formula{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#3730A3;margin:5px 0 4px;display:block;line-height:1.7;}
+.briefing-af-hold-box{background:#EDE9FE;border:1px solid #C4B5FD;border-radius:var(--r-sm);padding:10px 12px;font-size:11px;color:#4C1D95;margin-top:8px;line-height:1.5;}
+.briefing-af-hold-entries{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:7px;}
+@media(max-width:640px){.briefing-af-hold-entries{grid-template-columns:1fr;}}
+.briefing-af-hold-entry{background:#fff;border:1px solid #C4B5FD;border-radius:var(--r-sm);padding:7px 8px;font-size:10px;color:#4C1D95;text-align:center;}
+.briefing-af-hold-entry b{display:block;font-size:11px;color:#3730A3;margin-bottom:2px;}
+
+/* ── ILS correction card ── */
+.briefing-af-ils-ok{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:var(--r-sm);padding:10px;line-height:1.5;}
+.briefing-af-ils-bad{background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--r-sm);padding:10px;line-height:1.5;}
+
+/* ── Phraséo ── */
+.briefing-af-phrase-block{background:var(--bg2);border-left:3px solid var(--hop);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:7px 12px;margin-bottom:5px;}
+.briefing-af-phrase-label{font-size:10px;color:var(--text2);margin-bottom:1px;}
+.briefing-af-phrase-val{font-size:12px;font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace;}
+.briefing-af-lido-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+@media(max-width:480px){.briefing-af-lido-grid{grid-template-columns:1fr;}}
+.briefing-af-lido-item{background:var(--bg2);border-radius:var(--r-sm);padding:7px 10px;font-size:11px;color:var(--text2);}
+.briefing-af-lido-item span{font-weight:600;color:#185FA5;}
+
+/* ── Méthode retour autonome ── */
+.briefing-af-prog-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;font-size:11px;color:var(--text2);}
+.briefing-af-prog-track{flex:1;height:5px;background:var(--bg2);border-radius:100px;}
+.briefing-af-prog-fill{height:5px;border-radius:100px;background:var(--navy);transition:width .3s;}
+.briefing-af-expand-btn{font-size:11px;color:var(--text2);background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 12px;cursor:pointer;transition:background .15s;white-space:nowrap;}
+.briefing-af-expand-btn:hover{background:var(--bg2);}
+.briefing-af-method-outer{display:flex;gap:0;margin-bottom:0;}
+.briefing-af-method-left{display:flex;flex-direction:column;align-items:center;width:48px;flex-shrink:0;}
+.briefing-af-method-num{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:1;flex-shrink:0;}
+.briefing-af-method-line{width:2px;flex:1;background:var(--border);margin:4px 0;min-height:14px;}
+.briefing-af-method-card{flex:1;background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;margin-left:8px;box-shadow:var(--sh);transition:border-color .15s;cursor:pointer;}
+.briefing-af-method-card:hover{border-color:var(--navy2);}
+.briefing-af-method-card.open{border-color:var(--navy);border-width:1.5px;}
+.briefing-af-method-header{display:flex;align-items:center;gap:8px;}
+.briefing-af-method-title{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.briefing-af-method-tag{font-size:10px;padding:2px 7px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+.briefing-af-method-chevron{font-size:13px;color:var(--text3);transition:transform .2s;flex-shrink:0;}
+.briefing-af-method-chevron.open{transform:rotate(180deg);}
+.briefing-af-method-body{display:none;margin-top:10px;border-top:1px solid var(--border);padding-top:10px;}
+.briefing-af-method-body.open{display:block;}
+.briefing-af-method-action{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px;}
+.briefing-af-method-action strong{color:var(--text);}
+.briefing-af-missed-section{margin-top:16px;border:2px solid var(--hop);border-radius:var(--r);padding:14px;background:#fff;}
+.briefing-af-missed-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.briefing-af-missed-ico{width:34px;height:34px;border-radius:50%;background:var(--hop);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.briefing-af-missed-step{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5;}
+.briefing-af-missed-step:last-child{border-bottom:none;}
+.briefing-af-missed-dot{width:22px;height:22px;border-radius:50%;background:#FEE2E2;border:2px solid #FCA5A5;color:#991B1B;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.briefing-af-aime-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px;}
+@media(max-width:500px){.briefing-af-aime-grid{grid-template-columns:1fr;}}
+.briefing-af-aime-card{border-radius:var(--r-sm);padding:9px 11px;border:1px solid;}
+.briefing-af-aime-letter{font-size:15px;font-weight:700;display:block;margin-bottom:2px;}
+.briefing-af-aime-name{font-size:10px;font-weight:600;display:block;margin-bottom:5px;}
+.briefing-af-aime-list{font-size:10px;line-height:1.5;padding-left:14px;margin:0;}
+.briefing-af-brief-step{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);line-height:1.5;}
+.briefing-af-brief-step:last-child{border-bottom:none;}
+.briefing-af-brief-dot{width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+
+/* ── RETEX ── */
+.briefing-af-retex-tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.briefing-af-retex-tabs::-webkit-scrollbar{display:none;}
+.briefing-af-retex-tab{background:none;border:none;padding:8px 12px;font-size:11px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-weight:400;transition:all .15s;}
+.briefing-af-retex-tab:hover{color:var(--navy);}
+.briefing-af-retex-tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600;}
+.briefing-af-rsection{display:none;}
+.briefing-af-rsection.active{display:block;}
+.briefing-af-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+@media(max-width:480px){.briefing-af-stat-grid{grid-template-columns:1fr 1fr;}}
+.briefing-af-stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;text-align:center;box-shadow:var(--sh);}
+.briefing-af-stat-num{font-size:24px;font-weight:700;color:var(--text);line-height:1;font-family:'IBM Plex Mono',monospace;}
+.briefing-af-stat-label{font-size:10px;color:var(--text2);margin-top:3px;}
+.briefing-af-terrain-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.briefing-af-terrain-row:last-child{border-bottom:none;}
+.briefing-af-terrain-name{font-weight:500;min-width:180px;font-size:11px;}
+.briefing-af-terrain-bar-wrap{flex:1;background:var(--bg2);border-radius:100px;height:7px;}
+.briefing-af-terrain-bar{height:7px;border-radius:100px;background:var(--navy);}
+.briefing-af-terrain-count{font-size:11px;color:var(--text2);min-width:22px;text-align:right;}
+.briefing-af-terrain-pct{font-size:10px;color:var(--text3);min-width:30px;text-align:right;}
+.briefing-af-q-cat{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 7px;}
+.briefing-af-q-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg2);border-radius:var(--r-sm);margin-bottom:5px;font-size:11px;line-height:1.4;}
+.briefing-af-q-item-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+.briefing-af-q-text{flex:1;color:var(--text);}
+.briefing-af-q-src{font-size:10px;color:var(--text3);margin-top:1px;display:block;}
+.briefing-af-freq{font-size:10px;padding:2px 6px;border-radius:10px;white-space:nowrap;flex-shrink:0;margin-left:auto;}
+.briefing-af-freq-h{background:#FEE2E2;color:#991B1B;}
+.briefing-af-freq-m{background:#FEF3C7;color:#92400E;}
+.briefing-af-freq-l{background:var(--bg2);color:var(--text2);border:1px solid var(--border);}
+.briefing-af-scenario-block{border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;background:#fff;box-shadow:var(--sh);}
+.briefing-af-scenario-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.briefing-af-step-list{list-style:none;margin-top:8px;}
+.briefing-af-step-list li{display:flex;gap:8px;align-items:flex-start;font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.5;}
+.briefing-af-step-list li:last-child{border-bottom:none;}
+.briefing-af-step-dot{width:18px;height:18px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;margin-top:1px;color:var(--text2);}
+.briefing-af-conseil-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5;}
+.briefing-af-conseil-item:last-child{border-bottom:none;}
+.briefing-af-conseil-num{width:20px;height:20px;border-radius:50%;background:var(--hop);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+
+/* ── BRIEFING AF A320 — Mode édition (CSS isolé, préfixe .briefing-af-) ── */
+.briefing-af-edit-toolbar{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;}
+.briefing-af-edit-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:var(--r-sm);font-size:11px;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.briefing-af-edit-btn:hover{background:var(--bg2);color:var(--navy);}
+.briefing-af-edit-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.briefing-af-reset-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:500;border:1px solid var(--border);background:#fff;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.briefing-af-reset-btn:hover{background:#FEF2F2;color:var(--hop);border-color:#FECACA;}
+/* Indicateur mode édition actif sur la vue */
+#view-briefing-af.briefing-af-editing .page-header{border-bottom:2px solid var(--hop);}
+/* Blocs éditables en mode édition */
+#view-briefing-af.briefing-af-editing [data-baf-editable="true"]{
+  border-radius:4px;
+  outline:1.5px dashed #BFDBFE;
+  background:rgba(239,246,255,0.55);
+  cursor:text;
+  transition:outline-color .15s, background .15s;
+  min-width:20px;
+  min-height:1em;
+  display:inline-block;
+}
+#view-briefing-af.briefing-af-editing [data-baf-editable="true"]:hover{
+  outline-color:#93C5FD;
+  background:rgba(219,234,254,0.65);
+}
+#view-briefing-af.briefing-af-editing [data-baf-editable="true"]:focus{
+  outline:2px solid #3B82F6;
+  background:rgba(239,246,255,0.9);
+}
+/* Correction display pour les span inline */
+#view-briefing-af.briefing-af-editing span[data-baf-editable="true"]{display:inline-block;}
+/* Impression : masquer toolbar, supprimer bordures édition */
+@media print{
+  .briefing-af-edit-toolbar{display:none!important;}
+  [data-baf-editable="true"]{outline:none!important;background:transparent!important;}
+}
 </style>
 </head>
 <body>
@@ -922,6 +1096,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
     <button class="nav-link" onclick="showView('profils',this)"><span>🏢 Profils</span></button>
     <button class="nav-link" onclick="showView('calendrier',this)"><span>📅 Calendrier</span></button>
     <button class="nav-link" onclick="showView('analytics',this)"><span>Analytics</span></button>
+    <button class="nav-link" onclick="showView('briefing-af',this)"><span>✈ Briefing AF A320</span></button>
   </div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
     <div id="sync-indicator" style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.4);padding:0 8px">
@@ -1285,7 +1460,319 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
 </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════
+     VIEW : BRIEFING AF A320
+     Ajout isolé — HTML + CSS + JS préfixés briefing-af-/briefingAf
+     Aucune modification des vues existantes
+══════════════════════════════════════════ -->
+<div class="view" id="view-briefing-af">
+<div class="page-content">
+
+  <div class="page-header">
+    <div>
+      <h1>Briefing AF A320</h1>
+      <p>Référentiel sélection · 20 retex analysés · Usage instructeur &amp; candidat</p>
+    </div>
+    <div class="briefing-af-edit-toolbar">
+      <button class="briefing-af-reset-btn" id="baf-reset-btn" onclick="briefingAfResetEditsFromSupabase()" title="Supprimer toutes les modifications et restaurer le contenu d'origine">↺ Réinitialiser</button>
+      <button class="briefing-af-edit-btn" id="baf-edit-btn" onclick="briefingAfToggleEditMode()">🔒 Verrouillé</button>
+    </div>
+  </div>
+
+  <!-- Sous-onglets internes -->
+  <div class="briefing-af-tabs">
+    <button class="briefing-af-tab active" onclick="briefingAfSwitchTab('baf-jour-j',this)">✈ Jour J</button>
+    <button class="briefing-af-tab" onclick="briefingAfSwitchTab('baf-phraseologie',this)">💬 Phraséo</button>
+    <button class="briefing-af-tab" onclick="briefingAfSwitchTab('baf-retour-autonome',this)">🧭 Retour autonome</button>
+    <button class="briefing-af-tab" onclick="briefingAfSwitchTab('baf-retex',this)">📊 RETEX</button>
+  </div>
+
+  <!-- ═══ SOUS-ONGLET : JOUR J ═══ -->
+  <div class="briefing-af-panel active" id="baf-jour-j">
+    <div class="briefing-af-panel-header">
+      <div class="briefing-af-panel-title">✈ Jour J</div>
+      <button class="briefing-af-print-btn" onclick="briefingAfPrintSection('baf-jour-j','Jour J')">🖨 Imprimer PDF</button>
+    </div>
+
+    <!-- Logistique -->
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--navy)"></div>Logistique</div>
+      <div class="briefing-af-info-row"><span class="briefing-af-info-icon">🏢</span><span class="briefing-af-info-label">Lieux</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-lieux" data-baf-section="jour-j">CDG — bât. 4701 (Lucien Bossoutrot) ou SimAero</span></div>
+      <div class="briefing-af-info-row"><span class="briefing-af-info-icon">📍</span><span class="briefing-af-info-label">Point de RV</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-rv" data-baf-section="jour-j">Hall central RdC (AF) · 1er étage (SimAero)</span></div>
+      <div class="briefing-af-info-row"><span class="briefing-af-info-icon">🪪</span><span class="briefing-af-info-label">Pièce d'identité</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-pi" data-baf-section="jour-j">Obligatoire — badge visiteur (AF) ou présentation aux évaluateurs (SimAero)</span></div>
+      <div class="briefing-af-info-row"><span class="briefing-af-info-icon">📱</span><span class="briefing-af-info-label">iPad compagnie</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-ipad" data-baf-section="jour-j">Autorisé — Jeppesen, NavBlue. Support tablette disponible dans le simu.</span></div>
+    </div>
+
+    <!-- Déroulement + Organisation -->
+    <div class="briefing-af-grid2">
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--c3)"></div>Déroulement</div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">👥</span><span class="briefing-af-info-label">Briefing</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-briefing" data-baf-section="jour-j">1h30 — 1 ou 2 candidats · 2 évaluateurs</span></div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">✈</span><span class="briefing-af-info-label">Simu</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-simu" data-baf-section="jour-j">1h45 de vol · 15 min d'installation avant</span></div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">✕</span><span class="briefing-af-info-label">Résultats</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-resultats" data-baf-section="jour-j">Pas de débriefing ni communication sur place</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--c2)"></div>Organisation séance</div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">⚖</span><span class="briefing-af-info-label">Masse avion</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-masse" data-baf-section="jour-j">Constante — 60 t (perfo précalculées)</span></div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">☁</span><span class="briefing-af-info-label">Météo</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-meteo" data-baf-section="jour-j">Évolutive au cours de la séance</span></div>
+        <div class="briefing-af-info-row"><span class="briefing-af-info-icon">✕</span><span class="briefing-af-info-label">Pannes</span><span class="briefing-af-info-val" data-baf-editable="true" data-baf-key="jourj-pannes" data-baf-section="jour-j">Pas prévues (sauf format LOFT)</span></div>
+      </div>
+    </div>
+
+    <!-- Stabilisation -->
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--hop)"></div>Stabilisation — point critique</div>
+      <div class="briefing-af-warning-box"><span>⚠</span><span><strong>1 000 ft AAL</strong> — plancher de stabilisation impératif IMC et VMC. Remise de gaz immédiate si non respecté.</span></div>
+      <p style="font-size:12px;color:var(--text2);margin-top:6px" data-baf-editable="true" data-baf-key="jourj-stab-items" data-baf-section="jour-j">5 items indissociables : <strong>configuré · axe &amp; plan · vitesse VAPP · poussée cohérente · checklist effectuée</strong></p>
+    </div>
+
+    <!-- ILS / TRACK -->
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--c4)"></div>ILS — correction LOC avec le TRACK</div>
+      <div class="briefing-af-grid2" style="margin-bottom:0">
+        <div class="briefing-af-ils-ok">
+          <div style="font-size:12px;font-weight:600;color:#065F46;margin-bottom:3px" data-baf-editable="true" data-baf-key="jourj-ils-ok-titre" data-baf-section="jour-j">LOC droite · TRACK droite</div>
+          <div style="font-size:11px;color:#065F46" data-baf-editable="true" data-baf-key="jourj-ils-ok-desc" data-baf-section="jour-j">Correction dans le bon sens — l'avion revient sur l'axe ✓</div>
+        </div>
+        <div class="briefing-af-ils-bad">
+          <div style="font-size:12px;font-weight:600;color:#7F1D1D;margin-bottom:3px" data-baf-editable="true" data-baf-key="jourj-ils-bad-titre" data-baf-section="jour-j">LOC droite · TRACK gauche</div>
+          <div style="font-size:11px;color:#7F1D1D" data-baf-editable="true" data-baf-key="jourj-ils-bad-desc" data-baf-section="jour-j">Correction inverse — l'avion s'écarte de l'axe ✗</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /baf-jour-j -->
+
+  <!-- ═══ SOUS-ONGLET : PHRASÉOLOGIE ═══ -->
+  <div class="briefing-af-panel" id="baf-phraseologie">
+    <div class="briefing-af-panel-header">
+      <div class="briefing-af-panel-title">💬 Phraséologie</div>
+      <button class="briefing-af-print-btn" onclick="briefingAfPrintSection('baf-phraseologie','Phraséologie')">🖨 Imprimer PDF</button>
+    </div>
+
+    <!-- Demandes de cibles PF → PM -->
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--navy)"></div>Demandes de cibles PF → PM</div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Vitesse</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-speed" data-baf-section="phraseo">Set speed [valeur]</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Cap</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-heading" data-baf-section="phraseo">Set heading [valeur]</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Altitude / FL</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-alt" data-baf-section="phraseo">Set altitude [valeur] / Set FL [valeur]</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">VOR</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-vor" data-baf-section="phraseo">Set VOR [fréquence] course [valeur]</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Calage</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-qnh" data-baf-section="phraseo">Set QNH [valeur] / Set standard</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Altitude remise de gaz</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-ga" data-baf-section="phraseo">Set go-around altitude [valeur]</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Volets</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-flaps" data-baf-section="phraseo">Flaps [position] / Go-around flaps</div></div>
+      <div class="briefing-af-phrase-block"><div class="briefing-af-phrase-label">Train</div><div class="briefing-af-phrase-val" data-baf-editable="true" data-baf-key="phraseo-gear" data-baf-section="phraseo">Gear up / Gear down</div></div>
+      <div class="briefing-af-success-box" style="margin-top:10px"><span>✓</span><span data-baf-editable="true" data-baf-key="phraseo-checked" data-baf-section="phraseo">Action-contrôle systématique sur chaque cible. Confirmation PF : <strong>"checked"</strong></span></div>
+    </div>
+
+    <!-- Lecture fiches IAC LIDO -->
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--c3)"></div>Lecture fiches IAC LIDO — 11 points dans l'ordre</div>
+      <div class="briefing-af-lido-grid">
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-01" data-baf-section="phraseo"><span>1</span> Terrain</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-02" data-baf-section="phraseo"><span>2</span> Type approche, identification</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-03" data-baf-section="phraseo"><span>3</span> Minima</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-04" data-baf-section="phraseo"><span>4</span> MSA</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-05" data-baf-section="phraseo"><span>5</span> Niveau, altitude transition</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-06" data-baf-section="phraseo"><span>6</span> Plan descente, référence, offset</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-07" data-baf-section="phraseo"><span>7</span> Contrôle plan</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-08" data-baf-section="phraseo"><span>8</span> Seuil décalé, piste, PAPI</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-09" data-baf-section="phraseo"><span>9</span> Altitude interception</div>
+        <div class="briefing-af-lido-item" data-baf-editable="true" data-baf-key="lido-10" data-baf-section="phraseo"><span>10</span> SDF, MOCA</div>
+        <div class="briefing-af-lido-item" style="grid-column:span 2" data-baf-editable="true" data-baf-key="lido-11" data-baf-section="phraseo"><span>11</span> Trajectoire approche interrompue</div>
+      </div>
+    </div>
+  </div><!-- /baf-phraseologie -->
+
+  <!-- ═══ SOUS-ONGLET : RETOUR AUTONOME ═══ -->
+  <div class="briefing-af-panel" id="baf-retour-autonome">
+    <div class="briefing-af-panel-header">
+      <div class="briefing-af-panel-title">🧭 Retour autonome</div>
+      <button class="briefing-af-print-btn" onclick="briefingAfPrintSection('baf-retour-autonome','Retour autonome')">🖨 Imprimer PDF</button>
+    </div>
+
+    <div class="briefing-af-info-box"><span>ℹ</span><span data-baf-editable="true" data-baf-key="retaut-principe" data-baf-section="retour-autonome"><strong>Principe fondamental :</strong> dès le transfert de commandes, réduire la vitesse pour gagner du temps de réflexion. Toute la séquence repose sur ce gain de temps initial.</span></div>
+
+    <div class="briefing-af-prog-row">
+      <span id="baf-m-label">0 / 8 étapes vues</span>
+      <div class="briefing-af-prog-track"><div class="briefing-af-prog-fill" id="baf-m-fill" style="width:0%"></div></div>
+      <button class="briefing-af-expand-btn" onclick="briefingAfToggleAllM()" id="baf-expand-btn-m">Tout développer</button>
+    </div>
+
+    <div id="baf-method-steps"></div>
+
+    <!-- Section approche loupée -->
+    <div class="briefing-af-missed-section">
+      <div class="briefing-af-missed-header">
+        <div class="briefing-af-missed-ico">⚠</div>
+        <div>
+          <div style="font-size:14px;font-weight:700">Approche loupée — non stabilisé à 1 000 ft</div>
+          <div style="font-size:11px;color:var(--text2)">Remise de gaz immédiate · Procédure de récupération</div>
+        </div>
+      </div>
+      <div class="briefing-af-missed-step"><div class="briefing-af-missed-dot">1</div><div data-baf-editable="true" data-baf-key="missed-01" data-baf-section="retour-autonome"><strong>Accepter l'erreur</strong> — ne pas chercher à rattraper sous 1 000 ft<span style="color:var(--text2);font-size:10px;display:block;margin-top:1px">Priorité absolue : remettre les gaz sans hésitation. Aucune correction tardive.</span></div></div>
+      <div class="briefing-af-missed-step"><div class="briefing-af-missed-dot">2</div><div data-baf-editable="true" data-baf-key="missed-02" data-baf-section="retour-autonome"><strong>Priorité pilotage : STANDBY</strong> — assiette + puissance RDG<span style="color:var(--text2);font-size:10px;display:block;margin-top:1px">Avion stabilisé avant tout. Ne pas parler, ne pas calculer. Piloter d'abord.</span></div></div>
+      <div class="briefing-af-missed-step"><div class="briefing-af-missed-dot">3</div><div data-baf-editable="true" data-baf-key="missed-03" data-baf-section="retour-autonome"><strong>Où est-on ?</strong> — VOR/DME, cap, altitude<span style="color:var(--text2);font-size:10px;display:block;margin-top:1px">Ne pas partir dans une direction sans s'être identifié sur la carte.</span></div></div>
+      <div class="briefing-af-missed-step"><div class="briefing-af-missed-dot">4</div><div data-baf-editable="true" data-baf-key="missed-04" data-baf-section="retour-autonome"><strong>On retourne là…</strong> — stratégie retour en respectant les MSA<span style="color:var(--text2);font-size:10px;display:block;margin-top:1px">Reprendre depuis l'étape 5 : étude carte + nouveau briefing complet.</span></div></div>
+      <div class="briefing-af-missed-step"><div class="briefing-af-missed-dot">5</div><div data-baf-editable="true" data-baf-key="missed-05" data-baf-section="retour-autonome"><strong>On recommence</strong> — nouvelle approche complète<span style="color:var(--text2);font-size:10px;display:block;margin-top:1px">Même rigueur que la première approche. Pas de raccourci.</span></div></div>
+    </div>
+  </div><!-- /baf-retour-autonome -->
+
+  <!-- ═══ SOUS-ONGLET : RETEX ═══ -->
+  <div class="briefing-af-panel" id="baf-retex">
+    <div class="briefing-af-panel-header">
+      <div class="briefing-af-panel-title">📊 RETEX</div>
+      <button class="briefing-af-print-btn" onclick="briefingAfPrintSection('baf-retex','RETEX')">🖨 Imprimer PDF</button>
+    </div>
+
+    <!-- Sous-onglets RETEX (4 — sans Légende) -->
+    <div class="briefing-af-retex-tabs">
+      <button class="briefing-af-retex-tab active" onclick="briefingAfShowRetex('stats',this)">Stats</button>
+      <button class="briefing-af-retex-tab" onclick="briefingAfShowRetex('questions',this)">Questions briefing</button>
+      <button class="briefing-af-retex-tab" onclick="briefingAfShowRetex('scenarios',this)">Scénarios simu</button>
+      <button class="briefing-af-retex-tab" onclick="briefingAfShowRetex('pieges',this)">Pièges &amp; conseils</button>
+    </div>
+
+    <!-- RETEX : Stats -->
+    <div class="briefing-af-rsection active" id="baf-rs-stats">
+      <div class="briefing-af-stat-grid">
+        <div class="briefing-af-stat-card"><div class="briefing-af-stat-num" data-baf-editable="true" data-baf-key="retex-stat-total" data-baf-section="retex">20</div><div class="briefing-af-stat-label" data-baf-editable="true" data-baf-key="retex-stat-total-label" data-baf-section="retex">Candidats analysés</div></div>
+        <div class="briefing-af-stat-card"><div class="briefing-af-stat-num" style="color:#059669" data-baf-editable="true" data-baf-key="retex-stat-admis" data-baf-section="retex">14</div><div class="briefing-af-stat-label" data-baf-editable="true" data-baf-key="retex-stat-admis-label" data-baf-section="retex">Admis ✅</div></div>
+        <div class="briefing-af-stat-card"><div class="briefing-af-stat-num" style="color:#DC2626" data-baf-editable="true" data-baf-key="retex-stat-ajou" data-baf-section="retex">5</div><div class="briefing-af-stat-label" data-baf-editable="true" data-baf-key="retex-stat-ajou-label" data-baf-section="retex">Ajournés ❌</div></div>
+        <div class="briefing-af-stat-card"><div class="briefing-af-stat-num">1</div><div class="briefing-af-stat-label">Inconnu</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--navy)"></div>Terrains rencontrés</div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇫🇷 Pointe-à-Pitre TFFR/TFFF</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:100%"></div></div><span class="briefing-af-terrain-count">6</span><span class="briefing-af-terrain-pct">30%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇮🇹 Rome FCO LIRF</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:67%"></div></div><span class="briefing-af-terrain-count">4</span><span class="briefing-af-terrain-pct">20%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇪🇸 Barcelone LEBL</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:50%"></div></div><span class="briefing-af-terrain-count">3</span><span class="briefing-af-terrain-pct">15%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇫🇷 Bordeaux BOD (LOFT)</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:33%"></div></div><span class="briefing-af-terrain-count">2</span><span class="briefing-af-terrain-pct">10%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇫🇷 Clermont-Ferrand LFLC</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:33%"></div></div><span class="briefing-af-terrain-count">2</span><span class="briefing-af-terrain-pct">10%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇮🇹 Milan MXP LIMC</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:33%"></div></div><span class="briefing-af-terrain-count">2</span><span class="briefing-af-terrain-pct">10%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇲🇦 Marrakech GMMX</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:17%"></div></div><span class="briefing-af-terrain-count">1</span><span class="briefing-af-terrain-pct">5%</span></div>
+        <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">🇫🇷 Mulhouse LFSB</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:17%"></div></div><span class="briefing-af-terrain-count">1</span><span class="briefing-af-terrain-pct">5%</span></div>
+      </div>
+      <div class="briefing-af-grid2">
+        <div class="card">
+          <div class="card-title"><div class="dot" style="background:var(--gold)"></div>Background candidats</div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">Hop / régional</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:100%"></div></div><span class="briefing-af-terrain-count">7</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">QT A320</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:71%"></div></div><span class="briefing-af-terrain-count">5</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">QT B737</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:57%"></div></div><span class="briefing-af-terrain-count">4</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">Aviation d'affaires</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:43%"></div></div><span class="briefing-af-terrain-count">3</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><div class="dot" style="background:var(--c3)"></div>Format séance</div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">2 candidats</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:100%"></div></div><span class="briefing-af-terrain-count">13</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">Format LOFT</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:31%"></div></div><span class="briefing-af-terrain-count">4</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">Panne moteur N-1</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:54%"></div></div><span class="briefing-af-terrain-count">7</span></div>
+          <div class="briefing-af-terrain-row"><span class="briefing-af-terrain-name">Sans panne moteur</span><div class="briefing-af-terrain-bar-wrap"><div class="briefing-af-terrain-bar" style="width:46%"></div></div><span class="briefing-af-terrain-count">6</span></div>
+        </div>
+      </div>
+    </div><!-- /baf-rs-stats -->
+
+    <!-- RETEX : Questions briefing -->
+    <div class="briefing-af-rsection" id="baf-rs-questions">
+      <div class="card">
+        <div class="briefing-af-q-cat">Préaffichages &amp; paramètres A320</div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#E30713">🎛</span><div style="flex:1"><div class="briefing-af-q-text">Assiette, poussée, pente par phase de vol — restitution au tableau</div><span class="briefing-af-q-src">Candidats A, O, E, P</span></div><span class="briefing-af-freq briefing-af-freq-h">Très fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#E30713">📈</span><div style="flex:1"><div class="briefing-af-q-text">Mêmes affichages/poussées à 10 000 ft ? Évolution du N1 avec l'altitude</div><span class="briefing-af-q-src">Candidats A, E, N, S</span></div><span class="briefing-af-freq briefing-af-freq-h">Très fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#B45309">⚙</span><div style="flex:1"><div class="briefing-af-q-text">Assiette en palier Flaps 3 ? En green dot ?</div><span class="briefing-af-q-src">Candidats O, P, S</span></div><span class="briefing-af-freq briefing-af-freq-m">Fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon">📋</span><div style="flex:1"><div class="briefing-af-q-text">Dessiner au tableau la séquence ILS complète (profil vertical)</div><span class="briefing-af-q-src">Candidats O, Q, D</span></div><span class="briefing-af-freq briefing-af-freq-m">Fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon">📋</span><div style="flex:1"><div class="briefing-af-q-text">Dessiner au tableau la séquence remise de gaz (G/A pattern)</div><span class="briefing-af-q-src">Candidats O, Q</span></div><span class="briefing-af-freq briefing-af-freq-m">Fréquent</span></div>
+
+        <div class="briefing-af-q-cat" style="margin-top:14px">Stabilisation &amp; critères d'approche</div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#E30713">✅</span><div style="flex:1"><div class="briefing-af-q-text">Citer les 5 critères de stabilisation à 1 000 ft AAL</div><span class="briefing-af-q-src">Candidats E, O, Q, P</span></div><span class="briefing-af-freq briefing-af-freq-h">Très fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#B45309">⚠</span><div style="flex:1"><div class="briefing-af-q-text">Que faire si un item se déstabilise après 1 000 ft ?</div><span class="briefing-af-q-src">Candidat E</span></div><span class="briefing-af-freq briefing-af-freq-l">Rare</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#B45309">👁</span><div style="flex:1"><div class="briefing-af-q-text">RVR minimum CAT 1 ? Peut-on essayer si RVR inférieur ? Gate altitude ?</div><span class="briefing-af-q-src">Candidat D</span></div><span class="briefing-af-freq briefing-af-freq-l">Rare</span></div>
+
+        <div class="briefing-af-q-cat" style="margin-top:14px">Radionavigation IFR &amp; calcul mental</div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#E30713">🧭</span><div style="flex:1"><div class="briefing-af-q-text">QDM / QDR : définitions, lecture HSI/RMI, utilisation du TRACK</div><span class="briefing-af-q-src">Candidats A, E, G, P, N</span></div><span class="briefing-af-freq briefing-af-freq-h">Très fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#E30713">➗</span><div style="flex:1"><div class="briefing-af-q-text">Calculs d'anticipation en virage : 10/T, 20/T, 30/T</div><span class="briefing-af-q-src">Candidats B, G, D, N</span></div><span class="briefing-af-freq briefing-af-freq-h">Très fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#B45309">➗</span><div style="flex:1"><div class="briefing-af-q-text">Arc DME : formule GS/200 + 0,2 · longueur d'arc · distance DME verticale balise</div><span class="briefing-af-q-src">Candidats N, T, P</span></div><span class="briefing-af-freq briefing-af-freq-m">Fréquent</span></div>
+        <div class="briefing-af-q-item"><span class="briefing-af-q-item-icon" style="color:#B45309">➗</span><div style="flex:1"><div class="briefing-af-q-text">Plan à 3° : relation GS/vario · distance par nautique</div><span class="briefing-af-q-src">Candidats S, P, T, D</span></div><span class="briefing-af-freq briefing-af-freq-m">Fréquent</span></div>
+      </div>
+    </div><!-- /baf-rs-questions -->
+
+    <!-- RETEX : Scénarios simu -->
+    <div class="briefing-af-rsection" id="baf-rs-scenarios">
+      <div class="briefing-af-success-box"><span>✓</span><span>Toutes les séances commencent par une <strong>maniabilité ~15 min au FL100</strong> : virages 30°/45°, montée/descente, accélérations avec volets, simulation ILS. Systématique chez les 20 candidats.</span></div>
+
+      <div class="briefing-af-scenario-block">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div class="briefing-af-scenario-icon" style="background:#DBEAFE">🛤</div>
+          <div style="font-size:13px;font-weight:600">Scénario standard — retour autonome + ILS · 12/20 candidats</div>
+        </div>
+        <ul class="briefing-af-step-list">
+          <li><div class="briefing-af-step-dot">1</div><span>Maniabilité FL100 · virages, montée/descente, simulation ILS avec configuration</span></li>
+          <li><div class="briefing-af-step-dot">2</div><span>Interceptions QDM/QDR avec calculs d'anticipation · identification position sur carte</span></li>
+          <li><div class="briefing-af-step-dot">3</div><span>Transfert commandes → retour autonome · holding · briefing AIME + plan d'action</span></li>
+          <li><div class="briefing-af-step-dot">4</div><span>ILS raw data · 1ère approche → remise de gaz (aux minima ou avant 1 000 ft)</span></li>
+          <li><div class="briefing-af-step-dot">5</div><span>2ème ILS → RDG ou atterrissage · option panne moteur → circuit N-1 → pose finale</span></li>
+        </ul>
+      </div>
+
+      <div class="briefing-af-scenario-block">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div class="briefing-af-scenario-icon" style="background:#FFF7ED">📄</div>
+          <div style="font-size:13px;font-weight:600">Scénario LOFT — vol de ligne complet · 4/20 candidats (J, K, L, M)</div>
+        </div>
+        <ul class="briefing-af-step-list">
+          <li><div class="briefing-af-step-dot">1</div><span>Briefing étendu : OFP fourni, calcul block fuel, réglementation carburant (~25 min)</span></li>
+          <li><div class="briefing-af-step-dot">2</div><span>Décollage normal, SID, directe avec vérification MSA, événement ECAM en montée</span></li>
+          <li><div class="briefing-af-step-dot">3</div><span>FORDEC / DODAR / NITTS → décision de déroutement (terrain à justifier)</span></li>
+          <li><div class="briefing-af-step-dot">4</div><span>Retour autonome full raw data OEI → ILS → RDG → circuit visuel → atterrissage</span></li>
+        </ul>
+        <div class="briefing-af-warning-box" style="margin-top:10px"><span>⚠</span><span>Le FORDEC est très attendu. Les évaluateurs challengent les décisions et demandent d'évaluer toutes les options simultanément.</span></div>
+      </div>
+
+      <div class="briefing-af-scenario-block">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div class="briefing-af-scenario-icon" style="background:#FEE2E2">🔧</div>
+          <div style="font-size:13px;font-weight:600">Pannes rencontrées · ~60% des séances</div>
+        </div>
+        <ul class="briefing-af-step-list">
+          <li><div class="briefing-af-step-dot">▸</div><span>Panne moteur en remise de gaz → circuit visuel N-1 → atterrissage complet (le plus fréquent)</span></li>
+          <li><div class="briefing-af-step-dot">▸</div><span>Panne moteur + feu moteur → décision circuit OEI (candidat D)</span></li>
+          <li><div class="briefing-af-step-dot">▸</div><span>Panne ILS en finale → RDG → retour radar vectoring (candidat D)</span></li>
+          <li><div class="briefing-af-step-dot">▸</div><span>ENG stall → QRH → FORDEC déroutement (candidats L, M)</span></li>
+          <li><div class="briefing-af-step-dot">▸</div><span>GPS fault × 2 → vérification capacité RNAV MEL (candidat M)</span></li>
+        </ul>
+      </div>
+    </div><!-- /baf-rs-scenarios -->
+
+    <!-- RETEX : Pièges & conseils -->
+    <div class="briefing-af-rsection" id="baf-rs-pieges">
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--hop)"></div>Pièges identifiés dans les retex</div>
+        <div class="briefing-af-warning-box"><span>⏱</span><span data-baf-editable="true" data-baf-key="retex-piege-01" data-baf-section="retex"><strong>Prise de décision trop longue.</strong> Candidat I : 15 min de tergiversation sur le terrain de dégagement. Une décision imparfaite mais rapide vaut mieux que l'hésitation.</span></div>
+        <div class="briefing-af-warning-box"><span>🧭</span><span data-baf-editable="true" data-baf-key="retex-piege-02" data-baf-section="retex"><strong>Confusion QDM/QDR.</strong> Candidat H : a confondu les deux et briefé une mauvaise position. Toujours vérifier avant de briefer.</span></div>
+        <div class="briefing-af-warning-box"><span>✈</span><span data-baf-editable="true" data-baf-key="retex-piege-03" data-baf-section="retex"><strong>PM qui ne tient pas le cap.</strong> Signalé par R et S. Donner des consignes précises et surveiller activement.</span></div>
+        <div class="briefing-af-warning-box"><span>🛤</span><span data-baf-editable="true" data-baf-key="retex-piege-04" data-baf-section="retex"><strong>Arc DME : mauvaise distance d'anticipation.</strong> Candidat I : 12-13 NM pour un arc à 14 NM. Bien lire la carte avant.</span></div>
+        <div class="briefing-af-warning-box"><span>🎛</span><span data-baf-editable="true" data-baf-key="retex-piege-05" data-baf-section="retex"><strong>Vitesse en holding.</strong> Candidat I : 250 kt dans une attente publiée à 220 kt. Toujours vérifier la vitesse publiée.</span></div>
+        <div class="briefing-af-warning-box"><span>👁</span><span data-baf-editable="true" data-baf-key="retex-piege-06" data-baf-section="retex"><strong>Oublier le mode ILS avant l'approche.</strong> Candidat E : freezé car mode ILS non armé. Checklist mentale systématique.</span></div>
+        <div class="briefing-af-warning-box"><span>🗺</span><span data-baf-editable="true" data-baf-key="retex-piege-07" data-baf-section="retex"><strong>MSA non vérifiée avant d'accepter une directe.</strong> Signalé par L et J. Toujours vérifier MSA/MRC avant tout raccourci.</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--c4)"></div>Conseils des candidats admis</div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">1</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-01" data-baf-section="retex">Considérer l'évaluateur comme un <strong>collègue normal</strong>. CRM à fond, partager sa réflexion.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">2</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-02" data-baf-section="retex">Dire <strong>"attends que je sois stabilisé ailes à plat"</strong> avant de répondre à une question.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">3</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-03" data-baf-section="retex"><strong>Verbaliser sa position et sa stratégie</strong> en permanence. Utiliser le VOR/DME.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">4</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-04" data-baf-section="retex"><strong>Monitorer activement</strong> quand le PM tient les commandes. Les évaluateurs font exprès des échappées.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">5</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-05" data-baf-section="retex"><strong>Ne pas hésiter à remettre les gaz</strong> en cas de doute ou d'instabilité. C'est la bonne décision.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">6</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-06" data-baf-section="retex"><strong>Connaître le support AF par cœur</strong> : valeurs, préaffichages, critères de stab.</div></div>
+        <div class="briefing-af-conseil-item"><div class="briefing-af-conseil-num">7</div><div style="font-size:12px;line-height:1.5" data-baf-editable="true" data-baf-key="retex-conseil-07" data-baf-section="retex">Un autodébrief peut être demandé à la fin. Être honnête et montrer sa capacité d'analyse.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="dot" style="background:var(--c4)"></div>Ambiance générale</div>
+        <div class="briefing-af-success-box"><span>✓</span><span data-baf-editable="true" data-baf-key="retex-ambiance" data-baf-section="retex">La majorité des candidats décrit des évaluateurs <strong>bienveillants</strong>, dans un esprit de coaching. Certains peuvent être volontairement déstabilisants — rester focus sur le pilotage.</span></div>
+      </div>
+    </div><!-- /baf-rs-pieges -->
+
+  </div><!-- /baf-retex -->
+
+</div><!-- /page-content -->
+</div><!-- /view-briefing-af -->
 </div><!-- /app -->
+
 
 <!-- ══════════════════════════════════════════
      MODALS
@@ -1696,6 +2183,10 @@ function showView(id, btn){
   if(id==='analytics') renderAnalytics();
   if(id==='calendrier') renderCalendar();
   if(id==='profils'){ renderProfils(); populateProfilSelects(); }
+  // Charger les éditions Supabase à l'ouverture de l'onglet Briefing AF A320
+  if(id==='briefing-af' && typeof briefingAfLoadEditsFromSupabase === 'function'){
+    setTimeout(briefingAfLoadEditsFromSupabase, 300);
+  }
 }
 
 function showCandidatView(id){
@@ -9054,6 +9545,648 @@ async function startApp(){
     setTimeout(()=>document.getElementById('login-email')?.focus(),100);
   }
 })();
+
+// ════════════════════════════════════════════════════
+// BRIEFING AF A320 — MODE ÉDITION + SUPABASE (IIFE isolé)
+// Préfixe fonctions : briefingAf | Préfixe IDs : baf-
+// Aucune variable globale non préfixée.
+// ════════════════════════════════════════════════════
+(function () {
+'use strict';
+
+// ── État interne ──
+var briefingAfIsEditing = false;
+// Cache des HTML originaux : { blockKey: innerHTML }
+var briefingAfOriginals = {};
+// Éditions chargées depuis Supabase : { blockKey: htmlContent }
+var briefingAfLoadedEdits = {};
+
+// ── Sélectionner tous les blocs éditables de l'onglet ──
+function briefingAfGetEditables() {
+  return document.querySelectorAll('#view-briefing-af [data-baf-editable="true"]');
+}
+
+// ── Stocker les HTML originaux (une seule fois au premier appel) ──
+function briefingAfCacheOriginals() {
+  briefingAfGetEditables().forEach(function (el) {
+    var key = el.getAttribute('data-baf-key');
+    if (key && !(key in briefingAfOriginals)) {
+      briefingAfOriginals[key] = el.innerHTML;
+    }
+  });
+  // Pour les blocs dynamiques (étapes renderMethod) : mise à jour après rendu
+  briefingAfCacheDynamicOriginals();
+}
+
+function briefingAfCacheDynamicOriginals() {
+  document.querySelectorAll('#baf-method-steps [data-baf-editable="true"]').forEach(function (el) {
+    var key = el.getAttribute('data-baf-key');
+    if (key && !(key in briefingAfOriginals)) {
+      briefingAfOriginals[key] = el.innerHTML;
+    }
+  });
+}
+
+// ── Appliquer les éditions chargées au DOM ──
+function briefingAfApplyEditsToDOM() {
+  var allEditables = document.querySelectorAll('#view-briefing-af [data-baf-editable="true"], #baf-method-steps [data-baf-editable="true"]');
+  allEditables.forEach(function (el) {
+    var key = el.getAttribute('data-baf-key');
+    if (key && briefingAfLoadedEdits[key] !== undefined) {
+      el.innerHTML = briefingAfLoadedEdits[key];
+    }
+  });
+  // Réappliquer contenteditable si en mode édition
+  if (briefingAfIsEditing) {
+    briefingAfSetEditableState(true);
+  }
+}
+
+// ── Activer / désactiver l'état contenteditable ──
+function briefingAfSetEditableState(isEditable) {
+  var view = document.getElementById('view-briefing-af');
+  var allEditables = document.querySelectorAll('#view-briefing-af [data-baf-editable="true"], #baf-method-steps [data-baf-editable="true"]');
+  allEditables.forEach(function (el) {
+    el.contentEditable = isEditable ? 'true' : 'false';
+  });
+  if (view) {
+    if (isEditable) {
+      view.classList.add('briefing-af-editing');
+    } else {
+      view.classList.remove('briefing-af-editing');
+    }
+  }
+}
+window.briefingAfSetEditableState = briefingAfSetEditableState;
+
+// ── Toggle mode édition ──
+function briefingAfToggleEditMode() {
+  var btn = document.getElementById('baf-edit-btn');
+  if (!briefingAfIsEditing) {
+    // Passer en mode édition
+    briefingAfCacheOriginals();
+    briefingAfIsEditing = true;
+    briefingAfSetEditableState(true);
+    if (btn) { btn.textContent = '🔓 Édition ouverte'; btn.classList.add('active'); }
+  } else {
+    // Verrouiller + sauvegarder
+    briefingAfIsEditing = false;
+    briefingAfSetEditableState(false);
+    if (btn) { btn.textContent = '🔒 Verrouillé'; btn.classList.remove('active'); }
+    briefingAfSaveEditsToSupabase();
+  }
+}
+window.briefingAfToggleEditMode = briefingAfToggleEditMode;
+
+// ── Charger les éditions depuis Supabase ──
+async function briefingAfLoadEditsFromSupabase() {
+  if (typeof sbClient === 'undefined' || !window.currentUser) return;
+  try {
+    var userId = window.currentUser.id;
+    var result = await sbClient
+      .from('briefing_af_content_edits')
+      .select('block_key, html_content')
+      .eq('instructor_id', userId);
+    if (result.error) { console.error('[BAF] Load error:', result.error.message); return; }
+    briefingAfLoadedEdits = {};
+    (result.data || []).forEach(function (row) {
+      briefingAfLoadedEdits[row.block_key] = row.html_content;
+    });
+    // Appliquer après le rendu dynamique
+    setTimeout(briefingAfApplyEditsToDOM, 100);
+  } catch (e) {
+    console.error('[BAF] Load exception:', e);
+  }
+}
+window.briefingAfLoadEditsFromSupabase = briefingAfLoadEditsFromSupabase;
+
+// ── Sauvegarder les éditions dans Supabase ──
+async function briefingAfSaveEditsToSupabase() {
+  if (typeof sbClient === 'undefined' || !window.currentUser) {
+    console.warn('[BAF] Sauvegarde ignorée : Supabase non disponible ou utilisateur non connecté.');
+    return;
+  }
+  var userId = window.currentUser.id;
+  var rows = [];
+  var allEditables = document.querySelectorAll('#view-briefing-af [data-baf-editable="true"], #baf-method-steps [data-baf-editable="true"]');
+  allEditables.forEach(function (el) {
+    var key = el.getAttribute('data-baf-key');
+    var section = el.getAttribute('data-baf-section') || 'unknown';
+    var current = el.innerHTML;
+    var original = briefingAfOriginals[key];
+    // Ne sauvegarder que si modifié par rapport à l'original
+    if (key && current !== undefined && current !== original) {
+      rows.push({ instructor_id: userId, section: section, block_key: key, html_content: current });
+      briefingAfLoadedEdits[key] = current;
+    }
+  });
+  if (rows.length === 0) return; // Rien de modifié
+  try {
+    var result = await sbClient
+      .from('briefing_af_content_edits')
+      .upsert(rows, { onConflict: 'instructor_id,block_key' });
+    if (result.error) {
+      console.error('[BAF] Save error:', result.error.message);
+      alert('Erreur de sauvegarde Briefing AF A320 : ' + result.error.message);
+    }
+  } catch (e) {
+    console.error('[BAF] Save exception:', e);
+    alert('Erreur inattendue lors de la sauvegarde du Briefing AF A320.');
+  }
+}
+window.briefingAfSaveEditsToSupabase = briefingAfSaveEditsToSupabase;
+
+// ── Réinitialiser les éditions ──
+async function briefingAfResetEditsFromSupabase() {
+  if (!confirm('Réinitialiser tout le contenu du Briefing AF A320 ?\n\nToutes vos modifications seront supprimées et le contenu d\'origine sera restauré. Cette action est irréversible.')) return;
+  // 1. Restaurer le HTML d'origine dans le DOM
+  briefingAfCacheOriginals(); // s'assurer que les originaux sont bien en cache
+  var allEditables = document.querySelectorAll('#view-briefing-af [data-baf-editable="true"], #baf-method-steps [data-baf-editable="true"]');
+  allEditables.forEach(function (el) {
+    var key = el.getAttribute('data-baf-key');
+    if (key && briefingAfOriginals[key] !== undefined) {
+      el.innerHTML = briefingAfOriginals[key];
+    }
+  });
+  // 2. Régénérer les étapes dynamiques (retour autonome)
+  if (typeof briefingAfRenderMethod === 'function') {
+    briefingAfRenderMethod();
+    setTimeout(briefingAfCacheDynamicOriginals, 150);
+  }
+  // 3. Vider le cache des éditions chargées
+  briefingAfLoadedEdits = {};
+  // 4. Supprimer dans Supabase
+  if (typeof sbClient !== 'undefined' && window.currentUser) {
+    try {
+      var result = await sbClient
+        .from('briefing_af_content_edits')
+        .delete()
+        .eq('instructor_id', window.currentUser.id);
+      if (result.error) {
+        console.error('[BAF] Reset error:', result.error.message);
+        alert('Contenu restauré localement, mais erreur lors de la suppression Supabase : ' + result.error.message);
+      }
+    } catch (e) {
+      console.error('[BAF] Reset exception:', e);
+    }
+  }
+  // 5. Si on était en mode édition, rester en mode édition avec les originaux
+  if (briefingAfIsEditing) {
+    briefingAfSetEditableState(true);
+  }
+}
+window.briefingAfResetEditsFromSupabase = briefingAfResetEditsFromSupabase;
+
+// ── Hook post-rendu exposé sur window ──
+// L'IIFE principal l'appellera après chaque renderMethod
+window.briefingAfPostRender = function () {
+  briefingAfApplyBafAttrsToSteps();
+  briefingAfCacheDynamicOriginals();
+  briefingAfApplyEditsToDOM();
+  if (briefingAfIsEditing) {
+    briefingAfSetEditableState(true);
+  }
+};
+
+// ── Ajouter les data-baf-editable sur les éléments générés dynamiquement ──
+function briefingAfApplyBafAttrsToSteps() {
+  var container = document.getElementById('baf-method-steps');
+  if (!container) return;
+
+  // Utilitaire : marquer un élément si pas encore marqué
+  function mark(el, key, section) {
+    if (el && !el.getAttribute('data-baf-key')) {
+      el.setAttribute('data-baf-editable', 'true');
+      el.setAttribute('data-baf-key', key);
+      el.setAttribute('data-baf-section', section || 'retour-autonome');
+    }
+  }
+
+  // Parcourir les cartes d'étapes dans l'ordre
+  var cards = container.querySelectorAll('.briefing-af-method-card');
+  cards.forEach(function(card, stepIdx) {
+    var sn = stepIdx + 1; // numéro d'étape 1–8
+
+    // Titre de l'étape
+    var title = card.querySelector('.briefing-af-method-title');
+    mark(title, 'methode-step-' + sn + '-title');
+
+    // Corps de l'étape (action principale)
+    var action = card.querySelector('.briefing-af-method-action');
+    mark(action, 'methode-step-' + sn + '-action');
+
+    // Piège
+    var piege = card.querySelector('.briefing-af-piege-box');
+    mark(piege, 'methode-piege-' + sn);
+
+    // Conseil
+    var tip = card.querySelector('.briefing-af-tip-box');
+    mark(tip, 'methode-tip-' + sn);
+
+    // Monitoring PM
+    var pmboxes = card.querySelectorAll('.briefing-af-pm-box');
+    pmboxes.forEach(function(pmb, pi) {
+      mark(pmb, 'methode-pm-' + sn + (pi > 0 ? '-' + (pi + 1) : ''));
+    });
+
+    // Calc-box (étape 4 : calcul temps balise)
+    var calcboxes = card.querySelectorAll('.briefing-af-calc-box');
+    calcboxes.forEach(function(cb, ci) {
+      mark(cb, 'methode-calc-' + sn + (ci > 0 ? '-' + (ci + 1) : ''));
+    });
+
+    // Hold-box (étape 4 : holding)
+    var holdboxes = card.querySelectorAll('.briefing-af-hold-box');
+    holdboxes.forEach(function(hb, hi) {
+      mark(hb, 'methode-hold-' + sn + (hi > 0 ? '-' + (hi + 1) : ''));
+      // Les hold-entries individuelles
+      var entries = hb.querySelectorAll('.briefing-af-hold-entry');
+      entries.forEach(function(he, ei) {
+        mark(he, 'methode-hold-' + sn + '-entry-' + (ei + 1));
+      });
+    });
+
+    // AIME : chaque carte individuelle (étape 6)
+    var aimeCards = card.querySelectorAll('.briefing-af-aime-card');
+    aimeCards.forEach(function(ac, ai) {
+      mark(ac, 'methode-aime-' + sn + '-' + (ai + 1));
+    });
+
+    // Plan d'action : chaque briefing-step (étape 6)
+    var briefSteps = card.querySelectorAll('.briefing-af-brief-step');
+    briefSteps.forEach(function(bs, bi) {
+      var textDiv = bs.querySelector('div:not(.briefing-af-brief-dot)');
+      if (textDiv) mark(textDiv, 'methode-brief-' + sn + '-' + (bi + 1));
+    });
+  });
+}
+
+// ── Init ──
+function briefingAfEditModeInit() {
+  // Charger les éditions Supabase (si connecté)
+  briefingAfLoadEditsFromSupabase();
+}
+
+// Exposer pour appel externe depuis showView si souhaité
+window.briefingAfLoadEditsFromSupabase = briefingAfLoadEditsFromSupabase;
+
+// Lancer l'init après que le DOM + renderMethod soient prêts
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(briefingAfEditModeInit, 200);
+  });
+} else {
+  setTimeout(briefingAfEditModeInit, 200);
+}
+
+})(); // fin IIFE mode édition briefing-af
+
+// ════════════════════════════════════════════════════
+// BRIEFING AF A320 — JS ISOLÉ (IIFE)
+// Toutes les fonctions et variables préfixées briefingAf
+// Tous les IDs HTML préfixés baf-
+// Aucune variable globale non préfixée ajoutée.
+// ════════════════════════════════════════════════════
+(function() {
+'use strict';
+
+// ── Navigation sous-onglets principaux ──
+function briefingAfSwitchTab(id, btn) {
+  document.querySelectorAll('#view-briefing-af .briefing-af-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('#view-briefing-af .briefing-af-tab').forEach(function(b){ b.classList.remove('active'); });
+  var panel = document.getElementById(id);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+window.briefingAfSwitchTab = briefingAfSwitchTab;
+
+// ── Navigation sous-onglets RETEX ──
+function briefingAfShowRetex(name, btn) {
+  document.querySelectorAll('#baf-retex .briefing-af-rsection').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('#baf-retex .briefing-af-retex-tab').forEach(function(b){ b.classList.remove('active'); });
+  var sec = document.getElementById('baf-rs-' + name);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+window.briefingAfShowRetex = briefingAfShowRetex;
+
+// ── Données méthode retour autonome ──
+var briefingAfMSTEPS = [
+  { num:1, title:'MSA ? CLB ?', tag:'Sécurité secteur', tagBg:'#DBEAFE', tagColor:'#1E40AF',
+    action:'Identifier immédiatement la <strong>MSA du secteur</strong> en cours et vérifier si on peut monter ou descendre. Consulter la carte MRC. Quelle est l\'altitude minimale de sécurité autour de moi ?',
+    piege:'Ne pas se lancer dans un cap vers le terrain sans vérifier la MSA. Une descente prématurée sous la MSA est une erreur éliminatoire.',
+    tip:'Déléguer immédiatement au PM l\'affichage de la MRC pendant que le PF se concentre sur le pilotage.', pm:null, extras:[] },
+  { num:2, title:'HDG home → MSA ? (route)', tag:'Cap terrain', tagBg:'#DBEAFE', tagColor:'#1E40AF',
+    action:'Prendre un <strong>cap approximatif vers le terrain</strong> tout en vérifiant les MSA sur la route. C\'est un cap de travail — pas encore la trajectoire définitive.',
+    piege:'Ne pas piquer en direct vers le terrain sans vérifier les reliefs et MSA sur la route. Le cap home n\'est pas forcément la route la plus sûre.',
+    tip:'Afficher le VOR du terrain sur le ND pour une référence visuelle du cap à tenir.', pm:'Monitoring PM : vérifier que le PM tient bien le cap demandé. Les évaluateurs font exprès de le laisser dériver.', extras:[] },
+  { num:3, title:'ATIS → demander perfo au PM', tag:'Info terrain', tagBg:'#FFF7ED', tagColor:'#92400E',
+    action:'<strong>Demander l\'ATIS</strong> au contrôle — c\'est le PM qui le prend et le note. Demander au PM de <strong>calculer les performances d\'atterrissage</strong> : il déterminera le réglage d\'autobrake (low ou med). Le PF reste concentré sur le pilotage.',
+    piege:'Ne pas écouter l\'ATIS soi-même. Le PF qui décroche du pilotage pour gérer l\'ATIS perd le contrôle de la situation.',
+    tip:'Formuler clairement : \'Tu prends l\'ATIS et tu me calcules les perfo atterrissage.\' Une seule demande, claire.', pm:'Monitoring PM : pendant le calcul des perfo, vérifier qu\'il maintient cap et altitude.', extras:[] },
+  { num:4, title:'Time available ? — calcul temps balise', tag:'Conscience temporelle', tagBg:'#EDE9FE', tagColor:'#5B21B6',
+    action:'Calculer le <strong>temps balise</strong> avec le facteur de base (NM/min) pour avoir une conscience de la situation temporelle. Objectif : <strong>~8 minutes</strong> pour étudier les cartes et briefer. Si insuffisant → anticiper un <strong>holding</strong> et son type d\'entrée.',
+    piege:'Ne pas faire ce calcul et se retrouver verticale balise sans avoir briefé. Un briefing précipité entraîne des oublis critiques.',
+    tip:'Si le temps manque, décider du holding tôt — avant d\'être trop proche de la balise. Anticiper le type d\'entrée depuis sa position actuelle.', pm:null,
+    extras:[
+      { type:'calc', title:'Calcul du temps balise', formula:'FB (NM/min) = GS ÷ 60\nTemps balise (min) = Distance balise (NM) ÷ FB', example:'GS = 240 kt → FB = 4 NM/min · Distance = 40 NM → 10 min ✓ briefing possible\nGS = 300 kt → FB = 5 NM/min · Distance = 30 NM → 6 min ✗ holding nécessaire' },
+      { type:'hold', title:'Anticipation du holding', desc:'Si temps balise < ~8 min, décider immédiatement. Choisir le type d\'entrée selon sa position par rapport à l\'axe inbound.', entries:[ { t:'Directe', d:'Dans le secteur de 70° côté virage · piquer vers la balise et virer' }, { t:'Décalée', d:'Secteur opposé côté virage · s\'aligner sur l\'inbound puis virer' }, { t:'Parallèle', d:'Secteur opposé côté opposé · voler parallèle inbound sens inverse puis virer' } ], astuce:'On peut choisir un hold non publié et tourner en standard par la droite — simplifie l\'entrée et évite de chercher une procédure publiée sous la charge de travail.' }
+    ] },
+  { num:5, title:'Étude carte — VOR & ILS Y en priorité', tag:'Préparation', tagBg:'#ECFDF5', tagColor:'#065F46',
+    action:'Aller toujours consulter en priorité les <strong>cartes VOR et ILS Y</strong>. Ces approches sont basées sur des VOR — équipements sol — et sont <strong>volables en raw data</strong>. Les approches <strong>ILS Z ou RNAV</strong> sont construites sur des points RNAV, non volables en raw data dans ce contexte. Lire les 11 points de la fiche IAC dans l\'ordre.',
+    piege:'Aller par réflexe sur l\'ILS Z car c\'est la première fiche disponible. Toujours vérifier que l\'approche choisie est volable en raw data.',
+    tip:'L\'ILS Y avec son VOR associé permet de descendre sous les MSA de secteur — c\'est souvent la clé pour gérer la descente en sécurité avant d\'intercepter le LOC.', pm:'Monitoring PM : pendant l\'étude de carte, vérifier régulièrement qu\'il maintient altitude et cap.', extras:[] },
+  { num:6, title:'Briefing AIME + plan d\'action', tag:'Briefing', tagBg:'#ECFDF5', tagColor:'#065F46',
+    action:'Effectuer le briefing en deux temps : d\'abord le <strong>TEM avec le modèle AIME</strong>, puis le <strong>plan d\'action</strong> dans l\'ordre logique de l\'approche.',
+    piege:'Bâcler le TEM ou l\'oublier. Les évaluateurs attendent qu\'on identifie les menaces avant le plan d\'action.',
+    tip:'Conclure le TEM par : \'Est-ce que tu as identifié d\'autres menaces ?\' puis le briefing complet par : \'Tu es d\'accord avec moi ?\'', pm:null,
+    extras:[ { type:'aime' }, { type:'brief' } ] },
+  { num:7, title:'Décélération → C/L → QNH dès la MSA', tag:'Séquençage', tagBg:'#1a2a4a', tagColor:'#fff',
+    action:'Commencer la <strong>décélération</strong> et sortir les traînées dans l\'ordre. Passer au <strong>QNH dès que l\'on descend à la MSA</strong> — ce trigger naturel évite l\'oubli classique. Effectuer la <strong>checklist APPROACH</strong> dès la configuration stabilisée, puis la <strong>checklist LANDING</strong> à environ 1 500 ft AAL.',
+    piege:'Oublier de passer au QNH — piège récurrent en autonomie. Associer le passage QNH à la descente sous la MSA.',
+    tip:'Profiter du temps restant pour demander au PM de <strong>relire la remise de gaz</strong> à voix haute — évite de la rebriefe sous charge de travail en finale.', pm:'Monitoring PM : vérifier que les cibles sont confirmées \'checked\' après chaque demande.', extras:[] },
+  { num:8, title:'Glide capture → missed app alt', tag:'Interception ILS', tagBg:'#ECFDF5', tagColor:'#065F46',
+    action:'Intercepter le <strong>glide slope par le bas</strong> uniquement. Afficher l\'<strong>altitude de remise de gaz</strong> AVANT de commencer la descente sur le plan. Vérifier les 5 critères à 1 000 ft : configuré · axe &amp; plan · vitesse VAPP · poussée cohérente · checklist effectuée.',
+    piege:'Intercepter le glide par le haut — erreur classique. Ne pas descendre sans avoir affiché l\'altitude de missed approach.',
+    tip:'Si l\'un des 5 critères n\'est pas rempli à 1 000 ft → remise de gaz immédiate, sans discussion.', pm:null, extras:[] }
+];
+
+var briefingAfAIME_DATA = [
+  { l:'A', name:'Avion', bg:'#EFF6FF', border:'#BFDBFE', lc:'#1E40AF', tc:'#1D4ED8', threats:['Pilotage raw data : pas d\'automatismes → vigilance accrue sur les paramètres','Configuration non familière → anticiper les vitesses et les traînées','Performances dégradées si météo difficile → s\'appuyer sur le calcul du PM'] },
+  { l:'I', name:'Infrastructures', bg:'#ECFDF5', border:'#A7F3D0', lc:'#065F46', tc:'#047857', threats:['Deux pistes sécantes → veiller la fréquence tour pour éviter toute collision en approche interrompue','Terrain accidenté → ne jamais descendre sous la MSA sans être établi sur une procédure','VOR éloigné → vérifier la distance DME à chaque point critique'] },
+  { l:'M', name:'Météo', bg:'#FFFBEB', border:'#FDE68A', lc:'#78350F', tc:'#92400E', threats:['Visibilité réduite → vérifier les minima avant le briefing, décision RDG anticipée','Vent travers fort → calculer la composante, vérifier la limite avion','Givrage en descente → anticiper le dégivrage et l\'impact sur les perfo'] },
+  { l:'E', name:'Environnement', bg:'#FFF1F2', border:'#FECDD3', lc:'#881337', tc:'#9F1239', threats:['Nuit ou IMC total → augmenter les marges de sécurité altitude et distance','Trafic dense → écoute radio active, vigilance TCAS','Terrain volcanique ou relief élevé → MSA potentiellement élevée, ne pas sous-estimer'] },
+  { l:'E', name:'Équipages', bg:'#EDE9FE', border:'#C4B5FD', lc:'#4C1D95', tc:'#5B21B6', threats:['Charge de travail élevée → déléguer au PM, ne pas tout garder pour soi','Fatigue ou stress → verbalisations accrues, rythme posé','PM peu familier avec l\'avion → vérifier chaque action, ne pas supposer'] }
+];
+
+var briefingAfMOpened = new Set();
+var briefingAfMAllOpen = false;
+
+function briefingAfRenderMethod() {
+  var container = document.getElementById('baf-method-steps');
+  if (!container) return;
+  container.innerHTML = '';
+  briefingAfMSTEPS.forEach(function(s, idx) {
+    var isOpen = briefingAfMOpened.has(idx);
+    var isLast = idx === briefingAfMSTEPS.length - 1;
+
+    var outer = document.createElement('div');
+    outer.className = 'briefing-af-method-outer';
+
+    var left = document.createElement('div');
+    left.className = 'briefing-af-method-left';
+    var num = document.createElement('div');
+    num.className = 'briefing-af-method-num';
+    num.textContent = s.num;
+    left.appendChild(num);
+    if (!isLast) {
+      var line = document.createElement('div');
+      line.className = 'briefing-af-method-line';
+      left.appendChild(line);
+    }
+
+    var card = document.createElement('div');
+    card.className = 'briefing-af-method-card' + (isOpen ? ' open' : '');
+
+    var hdr = document.createElement('div');
+    hdr.className = 'briefing-af-method-header';
+    hdr.onclick = (function(i){ return function(){ if(briefingAfMOpened.has(i)) briefingAfMOpened.delete(i); else briefingAfMOpened.add(i); briefingAfRenderMethod(); }; })(idx);
+
+    var ttl = document.createElement('div');
+    ttl.className = 'briefing-af-method-title';
+    ttl.textContent = s.title;
+
+    var tg = document.createElement('span');
+    tg.className = 'briefing-af-method-tag';
+    tg.style.background = s.tagBg;
+    tg.style.color = s.tagColor;
+    tg.textContent = s.tag;
+
+    var chv = document.createElement('span');
+    chv.className = 'briefing-af-method-chevron' + (isOpen ? ' open' : '');
+    chv.textContent = '▼';
+
+    hdr.appendChild(ttl);
+    hdr.appendChild(tg);
+    hdr.appendChild(chv);
+
+    var body = document.createElement('div');
+    body.className = 'briefing-af-method-body' + (isOpen ? ' open' : '');
+
+    var act = document.createElement('div');
+    act.className = 'briefing-af-method-action';
+    act.innerHTML = s.action;
+    body.appendChild(act);
+
+    (s.extras || []).forEach(function(ex) {
+      if (ex.type === 'calc') {
+        var d = document.createElement('div');
+        d.className = 'briefing-af-calc-box';
+        d.innerHTML = '<div style="font-size:11px;font-weight:600;color:#3730A3;margin-bottom:4px">📐 ' + ex.title + '</div>'
+          + '<span class="briefing-af-calc-formula">' + ex.formula.replace(/\n/g,'<br>') + '</span>'
+          + '<div style="font-size:11px;color:#4C1D95;margin-top:4px">' + ex.example.replace(/\n/g,'<br>') + '</div>';
+        body.appendChild(d);
+      }
+      if (ex.type === 'hold') {
+        var d2 = document.createElement('div');
+        d2.className = 'briefing-af-hold-box';
+        d2.innerHTML = '<div style="font-size:11px;font-weight:600;color:#3730A3;margin-bottom:4px">🔄 ' + ex.title + '</div>'
+          + '<div style="font-size:11px;margin-bottom:7px">' + ex.desc + '</div>'
+          + '<div class="briefing-af-hold-entries">' + ex.entries.map(function(e){ return '<div class="briefing-af-hold-entry"><b>' + e.t + '</b>' + e.d + '</div>'; }).join('') + '</div>'
+          + '<div style="margin-top:7px;background:#fff;border:1px solid #C4B5FD;border-radius:6px;padding:7px 10px;font-size:11px;color:#4C1D95"><strong>💡 ' + ex.astuce + '</strong></div>';
+        body.appendChild(d2);
+      }
+      if (ex.type === 'aime') {
+        var dA = document.createElement('div');
+        dA.style.marginTop = '10px';
+        var lbl = document.createElement('div');
+        lbl.style.cssText = 'font-size:11px;font-weight:600;margin-bottom:7px';
+        lbl.textContent = '🛡️ TEM — Modèle AIME';
+        dA.appendChild(lbl);
+        var grid = document.createElement('div');
+        grid.className = 'briefing-af-aime-grid';
+        briefingAfAIME_DATA.forEach(function(item) {
+          var ac = document.createElement('div');
+          ac.className = 'briefing-af-aime-card';
+          ac.style.background = item.bg;
+          ac.style.borderColor = item.border;
+          ac.innerHTML = '<span class="briefing-af-aime-letter" style="color:' + item.lc + '">' + item.l + '</span>'
+            + '<span class="briefing-af-aime-name" style="color:' + item.lc + '">' + item.name + '</span>'
+            + '<ul class="briefing-af-aime-list" style="color:' + item.tc + '">' + item.threats.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ul>';
+          grid.appendChild(ac);
+        });
+        dA.appendChild(grid);
+        var pmq = document.createElement('div');
+        pmq.className = 'briefing-af-pm-box';
+        pmq.style.marginTop = '8px';
+        pmq.innerHTML = '<span>❓</span><span><strong>Question PM :</strong> "Est-ce que tu as identifié d\'autres menaces ?" → Impliquer le PM avant de passer au plan d\'action.</span>';
+        dA.appendChild(pmq);
+        body.appendChild(dA);
+      }
+      if (ex.type === 'brief') {
+        var dB = document.createElement('div');
+        dB.style.marginTop = '12px';
+        var lblB = document.createElement('div');
+        lblB.style.cssText = 'font-size:11px;font-weight:600;margin-bottom:7px';
+        lblB.textContent = '📋 Plan d\'action — ordre du briefing';
+        dB.appendChild(lblB);
+        var items = [
+          { n:'1', t:'Projet d\'action', d:'Énoncer la stratégie choisie : type d\'approche, trajectoire, gestion de la descente.' },
+          { n:'2', t:'Lecture organisée de la fiche IAC', d:'Les 11 points dans l\'ordre : terrain · minima · MSA · altitude transition · plan descente · contrôle plan · seuil · altitude interception · SDF/MOCA · trajectoire AI.' },
+          { n:'3', t:'Remise de gaz (RDG)', d:'Énoncer clairement la missed approach : cap, altitude, trajectoire. S\'assurer que le PM l\'a bien intégrée.' },
+          { n:'4', t:'Atterrissage', d:'Préciser la sortie de piste (gauche ou droite), la bretelle en fonction de la distance calculée. Mentionner le réglage autobrake retenu.' }
+        ];
+        items.forEach(function(it) {
+          var row = document.createElement('div');
+          row.className = 'briefing-af-brief-step';
+          row.innerHTML = '<div class="briefing-af-brief-dot">' + it.n + '</div><div><strong>' + it.t + '</strong> — ' + it.d + '</div>';
+          dB.appendChild(row);
+        });
+        body.appendChild(dB);
+      }
+    });
+
+    if (s.piege) {
+      var pBox = document.createElement('div');
+      pBox.className = 'briefing-af-piege-box';
+      pBox.innerHTML = '<span>⚠</span><span><strong>Piège :</strong> ' + s.piege + '</span>';
+      body.appendChild(pBox);
+    }
+    if (s.tip) {
+      var tBox = document.createElement('div');
+      tBox.className = 'briefing-af-tip-box';
+      tBox.innerHTML = '<span>💡</span><span><strong>Conseil :</strong> ' + s.tip + '</span>';
+      body.appendChild(tBox);
+    }
+    if (s.pm) {
+      var pmBox = document.createElement('div');
+      pmBox.className = 'briefing-af-pm-box';
+      pmBox.innerHTML = '<span>👁</span><span><strong>Monitoring PM :</strong> ' + s.pm + '</span>';
+      body.appendChild(pmBox);
+    }
+
+    card.appendChild(hdr);
+    card.appendChild(body);
+    outer.appendChild(left);
+    outer.appendChild(card);
+    container.appendChild(outer);
+  });
+
+  var n = briefingAfMOpened.size;
+  var labelEl = document.getElementById('baf-m-label');
+  var fillEl = document.getElementById('baf-m-fill');
+  if (labelEl) labelEl.textContent = n + ' / 8 étapes vues';
+  if (fillEl) fillEl.style.width = Math.round(n / 8 * 100) + '%';
+
+  // Notifier le module édition après chaque rendu
+  if (typeof window.briefingAfPostRender === 'function') {
+    window.briefingAfPostRender();
+  }
+}
+window.briefingAfRenderMethod = briefingAfRenderMethod;
+
+function briefingAfToggleAllM() {
+  var btn = document.getElementById('baf-expand-btn-m');
+  if (briefingAfMAllOpen) {
+    briefingAfMOpened.clear();
+    briefingAfMAllOpen = false;
+    if (btn) btn.textContent = 'Tout développer';
+  } else {
+    briefingAfMSTEPS.forEach(function(_, i){ briefingAfMOpened.add(i); });
+    briefingAfMAllOpen = true;
+    if (btn) btn.textContent = 'Tout réduire';
+  }
+  briefingAfRenderMethod();
+}
+window.briefingAfToggleAllM = briefingAfToggleAllM;
+
+// ── Impression PDF — fenêtre séparée, contenu du sous-onglet uniquement ──
+function briefingAfPrintSection(tabId, tabLabel) {
+  var el = document.getElementById(tabId);
+  if (!el) return;
+
+  // Cloner le contenu du sous-onglet
+  var clone = el.cloneNode(true);
+
+  // Retirer le bouton d'impression du clone
+  var printBtns = clone.querySelectorAll('.briefing-af-print-btn, .briefing-af-panel-header');
+  printBtns.forEach(function(b){ b.style.display = 'none'; });
+
+  // Récupérer les styles isolés depuis la page courante
+  var styleContent = '';
+  var styleSheets = document.styleSheets;
+  for (var i = 0; i < styleSheets.length; i++) {
+    try {
+      var rules = styleSheets[i].cssRules || styleSheets[i].rules;
+      if (!rules) continue;
+      for (var j = 0; j < rules.length; j++) {
+        var ruleText = rules[j].cssText || '';
+        if (ruleText.indexOf('briefing-af') !== -1 || ruleText.indexOf('.card') !== -1 || ruleText.indexOf(':root') !== -1) {
+          styleContent += ruleText + '\n';
+        }
+      }
+    } catch(e) { /* cross-origin stylesheet, skip */ }
+  }
+
+  var win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) { alert('Veuillez autoriser les fenêtres pop-up pour imprimer.'); return; }
+
+  win.document.write('<!DOCTYPE html><html lang="fr"><head>'
+    + '<meta charset="UTF-8">'
+    + '<title>SIMPREP — Briefing AF A320 — ' + tabLabel + '</title>'
+    + '<style>'
+    + '@import url(\'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap\');'
+    + ':root{'
+    + '--hop:#E8001D;--navy:#0F1923;--navy2:#1a2d3e;--gold:#C8A84B;'
+    + '--bg:#F2F1EC;--bg2:#E8E7E1;--bg3:#DDDCD6;'
+    + '--border:#CCCBC4;--text:#1a1916;--text2:#5a5850;--text3:#8a8880;'
+    + '--c1:#DC2626;--c2:#D97706;--c3:#1D4ED8;--c4:#059669;'
+    + '--r:10px;--r-sm:6px;'
+    + '--sh:0 1px 4px rgba(0,0,0,0.06);--sh-md:0 4px 16px rgba(0,0,0,0.1);'
+    + '}'
+    + '*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}'
+    + 'body{font-family:\'IBM Plex Sans\',sans-serif;background:#fff;color:#1a1916;font-size:12px;line-height:1.5;padding:20mm 18mm 18mm;}'
+    + '.baf-print-title{font-size:16px;font-weight:700;color:#0F1923;margin-bottom:2mm;letter-spacing:-0.01em;}'
+    + '.baf-print-sub{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#E8001D;margin-bottom:8mm;border-bottom:2px solid #E8001D;padding-bottom:3mm;}'
+    + '.card{background:#fff;border:1px solid #CCCBC4;border-radius:8px;padding:12px;margin-bottom:10px;break-inside:avoid;}'
+    + '.card-title{font-size:10px;font-weight:700;color:#1a1916;margin-bottom:10px;display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.05em;}'
+    + '.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;display:inline-block;}'
+    + styleContent
+    + '.briefing-af-panel-header{display:none!important;}'
+    + '.briefing-af-print-btn{display:none!important;}'
+    + '.briefing-af-prog-row{display:none!important;}'
+    + '.briefing-af-expand-btn{display:none!important;}'
+    + '.briefing-af-method-body{display:block!important;}'
+    + '@page{size:A4 portrait;margin:15mm 15mm 18mm;}'
+    + '@media print{'
+    + 'body{padding:0;}'
+    + '.briefing-af-grid2{grid-template-columns:1fr 1fr!important;}'
+    + '.briefing-af-hold-entries{grid-template-columns:1fr 1fr 1fr!important;}'
+    + '.briefing-af-aime-grid{grid-template-columns:1fr 1fr!important;}'
+    + '}'
+    + '</style>'
+    + '</head><body>'
+    + '<div class="baf-print-title">SIMPREP — Briefing AF A320</div>'
+    + '<div class="baf-print-sub">' + tabLabel + ' · Référentiel sélection · 20 retex analysés</div>'
+    + clone.innerHTML
+    + '</body></html>');
+
+  win.document.close();
+  win.onload = function() {
+    setTimeout(function(){ win.print(); win.close(); }, 400);
+  };
+}
+window.briefingAfPrintSection = briefingAfPrintSection;
+
+// ── Init : rendu de la méthode retour autonome au chargement ──
+// On attend que le DOM soit prêt (le script est en fin de page, DOM déjà chargé)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', briefingAfRenderMethod);
+} else {
+  briefingAfRenderMethod();
+}
+
+})(); // fin IIFE briefing-af
 
 </script>
 </body>
