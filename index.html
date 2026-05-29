@@ -427,9 +427,7 @@ textarea.field-input{min-height:70px;resize:vertical;font-size:12px;}
 
   @page {
     size:A4 portrait;
-    margin:0 0 10mm 0;
-    @bottom-left  { content:"SIMPREP · Débrief instructeur · confidentiel"; font-size:6px; color:#aaa; margin-left:9mm; }
-    @bottom-right { content:"Page " counter(page) " / " counter(pages); font-size:6px; color:#888; font-weight:700; margin-right:9mm; }
+    margin:0;
   }
 
   #print-debrief {
@@ -5057,6 +5055,12 @@ async function _runGenerateAIBilan(cid, sid, mode, outputType){
   if(btn){ btn.disabled=true; btn.innerHTML='⏳ Génération '+typeInfo.icon+'…'; }
   if(status){ status.style.display='block'; status.textContent='Analyse en cours — '+typeInfo.label+'…'; status.style.color='#8a8880'; }
 
+  // Persister l'état saisi à l'écran avant de lire le contexte.
+  _persistCoachingLiveState(cid, sid);
+  db = loadDB();
+  candidat = db.candidats.find(function(c){ return c.id===cid; }) || candidat;
+  seance = (candidat.seances||[]).find(function(s){ return s.id===sid; }) || seance;
+
   var ctx    = buildSeanceContext(seance, candidat, cid, sid);
   var prompt = buildAIPrompt(ctx, mode, outputType);
   var cfg    = (typeof AI_MODES!=='undefined'&&AI_MODES[mode]) ? AI_MODES[mode] : {max_tokens:600,temperature:0.75};
@@ -5195,6 +5199,13 @@ async function generateAIBilan(cid, sid){
 
   if(btn){ btn.disabled=true; btn.innerHTML='⏳…'; }
   if(status){ status.style.display='block'; status.textContent='Génération du débrief candidat…'; }
+
+  // Persister l'état saisi à l'écran AVANT de lire le contexte,
+  // sinon l'IA reçoit l'ancien état (notes vides / à zéro).
+  _persistCoachingLiveState(cid, sid);
+  db = loadDB();
+  candidat = db.candidats.find(function(c){ return c.id===cid; }) || candidat;
+  seance = (candidat.seances||[]).find(function(s){ return s.id===sid; }) || seance;
 
   var ctx = buildSeanceContext(seance, candidat, cid, sid);
   var cfg = (AI_MODES[mode]||AI_MODES.standard);
@@ -5447,12 +5458,15 @@ async function generateAIPreseance(cid, sid){
   } catch(e){ console.warn('generateAIPreseance:', e.message); return null; }
 }
 
-function saveCoachingSheet(cid, sid){
+// Écrit l'état saisi à l'écran (variables vives + champs DOM) dans la base.
+// Utilisé par la sauvegarde manuelle ET avant chaque génération IA pour que
+// l'IA reçoive bien la totalité des notes en cours de saisie.
+function _persistCoachingLiveState(cid, sid){
   const db = loadDB();
   const c = db.candidats.find(x=>x.id===cid);
-  if(!c) return;
+  if(!c) return null;
   const s = (c.seances||[]).find(x=>x.id===sid);
-  if(!s) return;
+  if(!s) return null;
 
   // Save phases
   s.phases = JSON.parse(JSON.stringify(csPhaseData));
@@ -5465,7 +5479,7 @@ function saveCoachingSheet(cid, sid){
   // Save comp obs
   s.comp_obs = csCompData['_obs']||{};
 
-  // Save bilan
+  // Save actions
   const actions=[];
   for(let i=1;i<=5;i++){
     const text=(document.getElementById(`cs-action-${i}`)?.value||'').trim();
@@ -5473,6 +5487,7 @@ function saveCoachingSheet(cid, sid){
     actions.push({text,priorite:prio});
   }
   s.actions = actions;
+
   // Sauvegarder champs IA (IDs uniques par sid)
   var candTa = document.getElementById('cs-ai-candidat-'+sid);
   var instTa = document.getElementById('cs-ai-instructeur-'+sid);
@@ -5480,13 +5495,16 @@ function saveCoachingSheet(cid, sid){
   var instVal = instTa ? instTa.value.trim() : (s.aiNoteInstructeur||'');
   if(candVal) s.aiDebriefCandidat = candVal;
   if(instVal) s.aiNoteInstructeur = instVal;
-  // Legacy PDF : commentaire = débrief candidat
-  if(candVal) s.bilan.commentaire = candVal;
+
+  // Bilan — construire l'objet PUIS y reporter le commentaire/débrief.
+  // (Auparavant, le commentaire était écrasé par un champ cs-commentaire inexistant.)
+  var commentaireField = document.getElementById('cs-commentaire')?.value || '';
   s.bilan = {
     positifs: document.getElementById('cs-positifs')?.value||'',
     niveau: document.getElementById('cs-niveau')?.value||'',
     reco: document.getElementById('cs-reco')?.value||'',
-    commentaire: document.getElementById('cs-commentaire')?.value||''
+    // Legacy : commentaire = champ commentaire si présent, sinon débrief candidat, sinon ancienne valeur
+    commentaire: commentaireField || candVal || (s.bilan&&s.bilan.commentaire) || ''
   };
   s.saved_at = new Date().toISOString();
 
@@ -5496,6 +5514,11 @@ function saveCoachingSheet(cid, sid){
   s.phaseObjectivesStatus = JSON.parse(JSON.stringify(csObjStatus));
 
   saveDB(db);
+  return s;
+}
+
+function saveCoachingSheet(cid, sid){
+  if(!_persistCoachingLiveState(cid, sid)) return;
   // Brief visual feedback
   const btn = event?.target;
   if(btn){ const orig=btn.textContent; btn.textContent='✅ Sauvegardé'; setTimeout(()=>btn.textContent=orig,1500); }
@@ -6089,7 +6112,7 @@ function buildPrintSynthese(traps, signals, scores, phases){
 }
 
 // ── Bilan ──
-function buildPrintBilan(bilan,actions){
+function buildPrintBilan(bilan,actions,s){
   var html='<div class="pd-synth-wrap">';
   if(bilan.niveau||bilan.reco){
     html+='<div class="pd-verdict">';
@@ -6110,7 +6133,12 @@ function buildPrintBilan(bilan,actions){
     });
     html+='</div>';
   }
-  if(bilan.commentaire&&bilan.commentaire.trim()) html+='<div class="pd-card pd-avoid"><div class="pd-card-title">Commentaire instructeur</div><div style="font-size:9px;white-space:pre-wrap">'+bilan.commentaire+'</div></div>';
+  // Débrief candidat (généré IA ou saisi) — afficher sous son propre intitulé
+  var deb = (s && s.aiDebriefCandidat ? s.aiDebriefCandidat : '').trim();
+  var com = (bilan.commentaire||'').trim();
+  if(deb) html+='<div class="pd-card pd-avoid"><div class="pd-card-title">👤 Débrief candidat</div><div style="font-size:9px;white-space:pre-wrap">'+deb+'</div></div>';
+  // Commentaire instructeur — seulement s'il diffère du débrief candidat (évite le doublon du mirroir legacy)
+  if(com && com!==deb) html+='<div class="pd-card pd-avoid"><div class="pd-card-title">Commentaire instructeur</div><div style="font-size:9px;white-space:pre-wrap">'+com+'</div></div>';
   html+='</div>'; return html;
 }
 
@@ -6152,7 +6180,7 @@ function buildPrintDebrief(cid,sid){
       phasesHTML:'')+
     // Synthèse + Bilan
     buildPrintSynthese(traps,sigs,scores,phases)+
-    buildPrintBilan(bilan,actions)+
+    buildPrintBilan(bilan,actions,s)+
   '</div>';
 }
 
