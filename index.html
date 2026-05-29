@@ -8775,9 +8775,110 @@ function changeCredentials(){
 }
 
 // Override cloud button
+// ════════════════════════════════════════════════════
+// CHRONO SÉANCE — widget flottant (bas droite)
+// ════════════════════════════════════════════════════
+var _chrono = { running:false, startEpoch:null, accMs:0, tick:null, minimized:false, target:120*60*1000 };
+
+function _chronoElapsedMs(){
+  return _chrono.accMs + (_chrono.running && _chrono.startEpoch ? (Date.now()-_chrono.startEpoch) : 0);
+}
+function _chronoFmt(ms){
+  if(ms<0) ms=0;
+  var s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  var p=function(n){return (n<10?'0':'')+n;};
+  return p(h)+':'+p(m)+':'+p(sec);
+}
+function _chronoEnsure(){
+  if(document.getElementById('chrono-widget')) return;
+  if(!document.getElementById('chrono-style')){
+    var st=document.createElement('style'); st.id='chrono-style';
+    st.textContent='@keyframes chronoPulse{0%,100%{opacity:1}50%{opacity:.4}}'
+      +'#chrono-widget button:active{transform:scale(.96)}'
+      +'@media print{#chrono-widget{display:none!important}}';
+    document.head.appendChild(st);
+  }
+  var w=document.createElement('div');
+  w.id='chrono-widget';
+  w.style.cssText="position:fixed;right:18px;bottom:18px;z-index:600;display:none;font-family:'IBM Plex Sans',-apple-system,sans-serif";
+  document.body.appendChild(w);
+  _chronoRender();
+}
+function _chronoRender(){
+  var w=document.getElementById('chrono-widget'); if(!w) return;
+  var ms=_chronoElapsedMs();
+  var remain=_chrono.target-ms;
+  var pct=Math.min(100, Math.max(0, (ms/_chrono.target)*100));
+  var over=ms>_chrono.target;
+  var barColor=over?'#E8001D':(pct>83?'#D97706':'#059669');
+  var dotColor=over?'#E8001D':(_chrono.running?'#22c55e':'#8a8880');
+  var dotAnim=_chrono.running?'animation:chronoPulse 1.4s infinite;':'';
+  if(_chrono.minimized){
+    w.innerHTML='<button onclick="chronoMinimize(false)" title="Agrandir le chrono" '
+      +'style="display:flex;align-items:center;gap:8px;background:#0F1923;border:1px solid rgba(255,255,255,.12);'
+      +'border-radius:999px;padding:8px 14px;box-shadow:0 6px 24px rgba(0,0,0,.28);cursor:pointer;color:#fff">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';'+dotAnim+'"></span>'
+      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:14px;font-weight:600">'+_chronoFmt(ms)+'</span>'
+      +'<span style="font-size:12px;opacity:.55">⤢</span></button>';
+    return;
+  }
+  var remainTxt=over?('+'+_chronoFmt(ms-_chrono.target)+' au-delà des 2 h'):('reste '+_chronoFmt(remain)+' sur 2 h');
+  var label=_chrono.running?'❚❚ Pause':(ms>0?'▶ Reprendre':'▶ Démarrer');
+  var btnBg=_chrono.running?'#243647':'#E8001D';
+  w.innerHTML=
+    '<div style="width:212px;background:#0F1923;border:1px solid rgba(255,255,255,.1);border-radius:14px;box-shadow:0 10px 34px rgba(0,0,0,.32);overflow:hidden;color:#fff">'
+      +'<div style="display:flex;align-items:center;gap:7px;padding:9px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07)">'
+        +'<span style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';'+dotAnim+'"></span>'
+        +'<span style="font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.62)">Chrono séance</span>'
+        +'<button onclick="chronoMinimize(true)" title="Réduire" style="margin-left:auto;background:transparent;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:15px;line-height:1;padding:2px 5px">—</button>'
+      +'</div>'
+      +'<div style="padding:12px 14px 14px">'
+        +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:30px;font-weight:600;text-align:center;color:'+(over?'#ff5a6e':'#fff')+'">'+_chronoFmt(ms)+'</div>'
+        +'<div style="height:5px;background:rgba(255,255,255,.1);border-radius:999px;margin:10px 0 6px;overflow:hidden">'
+          +'<div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:999px;transition:width .3s,background .3s"></div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:rgba(255,255,255,.6);text-align:center;margin-bottom:11px">'+remainTxt+'</div>'
+        +'<div style="display:flex;gap:7px">'
+          +'<button onclick="chronoToggle()" style="flex:1;background:'+btnBg+';border:none;border-radius:8px;padding:8px 0;font-size:11px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">'+label+'</button>'
+          +'<button onclick="chronoReset()" title="Réinitialiser" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 11px;font-size:12px;color:rgba(255,255,255,.8);cursor:pointer;font-family:inherit">↺</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+}
+function chronoToggle(){
+  if(_chrono.running){
+    _chrono.accMs+=Date.now()-_chrono.startEpoch;
+    _chrono.startEpoch=null; _chrono.running=false;
+    if(_chrono.tick){ clearInterval(_chrono.tick); _chrono.tick=null; }
+  } else {
+    _chrono.startEpoch=Date.now(); _chrono.running=true;
+    if(_chrono.tick) clearInterval(_chrono.tick);
+    _chrono.tick=setInterval(_chronoRender,1000);
+  }
+  _chronoRender();
+}
+function chronoReset(){
+  if(_chronoElapsedMs()>1000 && !confirm('Réinitialiser le chrono à 00:00:00 ?')) return;
+  _chrono.running=false; _chrono.startEpoch=null; _chrono.accMs=0;
+  if(_chrono.tick){ clearInterval(_chrono.tick); _chrono.tick=null; }
+  _chronoRender();
+}
+function chronoMinimize(v){ _chrono.minimized=!!v; _chronoRender(); }
+function chronoShow(){ _chronoEnsure(); var w=document.getElementById('chrono-widget'); if(w) w.style.display='block'; _chronoRender(); }
+function chronoHide(){ var w=document.getElementById('chrono-widget'); if(w) w.style.display='none'; }
+function _chronoWatch(){
+  _chronoEnsure();
+  var view=document.getElementById('view-seance');
+  if(!view) return;
+  var apply=function(){ if(view.classList.contains('active')) chronoShow(); else chronoHide(); };
+  apply();
+  new MutationObserver(apply).observe(view,{attributes:true,attributeFilter:['class']});
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   const btn=document.getElementById('sb-nav-btn');
   if(btn) btn.onclick=openSupabaseModal;
+  _chronoWatch();
 });
 
 // ════════════════════════════════════════════════════
